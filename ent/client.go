@@ -15,6 +15,7 @@ import (
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -176,7 +177,7 @@ func (c *DirectoryClient) UpdateOne(d *Directory) *DirectoryUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *DirectoryClient) UpdateOneID(id int) *DirectoryUpdateOne {
+func (c *DirectoryClient) UpdateOneID(id int64) *DirectoryUpdateOne {
 	mutation := newDirectoryMutation(c.config, OpUpdateOne, withDirectoryID(id))
 	return &DirectoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -193,7 +194,7 @@ func (c *DirectoryClient) DeleteOne(d *Directory) *DirectoryDeleteOne {
 }
 
 // DeleteOne returns a builder for deleting the given entity by its id.
-func (c *DirectoryClient) DeleteOneID(id int) *DirectoryDeleteOne {
+func (c *DirectoryClient) DeleteOneID(id int64) *DirectoryDeleteOne {
 	builder := c.Delete().Where(directory.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -208,12 +209,12 @@ func (c *DirectoryClient) Query() *DirectoryQuery {
 }
 
 // Get returns a Directory entity by its id.
-func (c *DirectoryClient) Get(ctx context.Context, id int) (*Directory, error) {
+func (c *DirectoryClient) Get(ctx context.Context, id int64) (*Directory, error) {
 	return c.Query().Where(directory.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *DirectoryClient) GetX(ctx context.Context, id int) *Directory {
+func (c *DirectoryClient) GetX(ctx context.Context, id int64) *Directory {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -266,7 +267,7 @@ func (c *ObjectClient) UpdateOne(o *Object) *ObjectUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *ObjectClient) UpdateOneID(id int) *ObjectUpdateOne {
+func (c *ObjectClient) UpdateOneID(id int64) *ObjectUpdateOne {
 	mutation := newObjectMutation(c.config, OpUpdateOne, withObjectID(id))
 	return &ObjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -283,7 +284,7 @@ func (c *ObjectClient) DeleteOne(o *Object) *ObjectDeleteOne {
 }
 
 // DeleteOne returns a builder for deleting the given entity by its id.
-func (c *ObjectClient) DeleteOneID(id int) *ObjectDeleteOne {
+func (c *ObjectClient) DeleteOneID(id int64) *ObjectDeleteOne {
 	builder := c.Delete().Where(object.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -298,17 +299,33 @@ func (c *ObjectClient) Query() *ObjectQuery {
 }
 
 // Get returns a Object entity by its id.
-func (c *ObjectClient) Get(ctx context.Context, id int) (*Object, error) {
+func (c *ObjectClient) Get(ctx context.Context, id int64) (*Object, error) {
 	return c.Query().Where(object.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *ObjectClient) GetX(ctx context.Context, id int) *Object {
+func (c *ObjectClient) GetX(ctx context.Context, id int64) *Object {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryUser queries the user edge of a Object.
+func (c *ObjectClient) QueryUser(o *Object) *UserQuery {
+	query := &UserQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(object.Table, object.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, object.UserTable, object.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.
@@ -356,7 +373,7 @@ func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *UserClient) UpdateOneID(id int) *UserUpdateOne {
+func (c *UserClient) UpdateOneID(id int64) *UserUpdateOne {
 	mutation := newUserMutation(c.config, OpUpdateOne, withUserID(id))
 	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -373,7 +390,7 @@ func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
 }
 
 // DeleteOne returns a builder for deleting the given entity by its id.
-func (c *UserClient) DeleteOneID(id int) *UserDeleteOne {
+func (c *UserClient) DeleteOneID(id int64) *UserDeleteOne {
 	builder := c.Delete().Where(user.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -388,17 +405,33 @@ func (c *UserClient) Query() *UserQuery {
 }
 
 // Get returns a User entity by its id.
-func (c *UserClient) Get(ctx context.Context, id int) (*User, error) {
+func (c *UserClient) Get(ctx context.Context, id int64) (*User, error) {
 	return c.Query().Where(user.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *UserClient) GetX(ctx context.Context, id int) *User {
+func (c *UserClient) GetX(ctx context.Context, id int64) *User {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryObjects queries the objects edge of a User.
+func (c *UserClient) QueryObjects(u *User) *ObjectQuery {
+	query := &ObjectQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(object.Table, object.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ObjectsTable, user.ObjectsColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.

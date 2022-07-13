@@ -6,8 +6,10 @@ import (
 	"context"
 	"drive/ent/object"
 	"drive/ent/predicate"
+	"drive/ent/user"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -27,9 +29,108 @@ func (ou *ObjectUpdate) Where(ps ...predicate.Object) *ObjectUpdate {
 	return ou
 }
 
+// SetCreatedBy sets the "created_by" field.
+func (ou *ObjectUpdate) SetCreatedBy(i int64) *ObjectUpdate {
+	ou.mutation.ResetCreatedBy()
+	ou.mutation.SetCreatedBy(i)
+	return ou
+}
+
+// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
+func (ou *ObjectUpdate) SetNillableCreatedBy(i *int64) *ObjectUpdate {
+	if i != nil {
+		ou.SetCreatedBy(*i)
+	}
+	return ou
+}
+
+// AddCreatedBy adds i to the "created_by" field.
+func (ou *ObjectUpdate) AddCreatedBy(i int64) *ObjectUpdate {
+	ou.mutation.AddCreatedBy(i)
+	return ou
+}
+
+// SetUpdatedBy sets the "updated_by" field.
+func (ou *ObjectUpdate) SetUpdatedBy(i int64) *ObjectUpdate {
+	ou.mutation.ResetUpdatedBy()
+	ou.mutation.SetUpdatedBy(i)
+	return ou
+}
+
+// SetNillableUpdatedBy sets the "updated_by" field if the given value is not nil.
+func (ou *ObjectUpdate) SetNillableUpdatedBy(i *int64) *ObjectUpdate {
+	if i != nil {
+		ou.SetUpdatedBy(*i)
+	}
+	return ou
+}
+
+// AddUpdatedBy adds i to the "updated_by" field.
+func (ou *ObjectUpdate) AddUpdatedBy(i int64) *ObjectUpdate {
+	ou.mutation.AddUpdatedBy(i)
+	return ou
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (ou *ObjectUpdate) SetUpdatedAt(t time.Time) *ObjectUpdate {
+	ou.mutation.SetUpdatedAt(t)
+	return ou
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (ou *ObjectUpdate) SetDeletedAt(t time.Time) *ObjectUpdate {
+	ou.mutation.SetDeletedAt(t)
+	return ou
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (ou *ObjectUpdate) SetNillableDeletedAt(t *time.Time) *ObjectUpdate {
+	if t != nil {
+		ou.SetDeletedAt(*t)
+	}
+	return ou
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (ou *ObjectUpdate) ClearDeletedAt() *ObjectUpdate {
+	ou.mutation.ClearDeletedAt()
+	return ou
+}
+
+// SetURL sets the "url" field.
+func (ou *ObjectUpdate) SetURL(s string) *ObjectUpdate {
+	ou.mutation.SetURL(s)
+	return ou
+}
+
+// SetUserID sets the "user" edge to the User entity by ID.
+func (ou *ObjectUpdate) SetUserID(id int64) *ObjectUpdate {
+	ou.mutation.SetUserID(id)
+	return ou
+}
+
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
+func (ou *ObjectUpdate) SetNillableUserID(id *int64) *ObjectUpdate {
+	if id != nil {
+		ou = ou.SetUserID(*id)
+	}
+	return ou
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (ou *ObjectUpdate) SetUser(u *User) *ObjectUpdate {
+	return ou.SetUserID(u.ID)
+}
+
 // Mutation returns the ObjectMutation object of the builder.
 func (ou *ObjectUpdate) Mutation() *ObjectMutation {
 	return ou.mutation
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (ou *ObjectUpdate) ClearUser() *ObjectUpdate {
+	ou.mutation.ClearUser()
+	return ou
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -38,6 +139,7 @@ func (ou *ObjectUpdate) Save(ctx context.Context) (int, error) {
 		err      error
 		affected int
 	)
+	ou.defaults()
 	if len(ou.hooks) == 0 {
 		affected, err = ou.sqlSave(ctx)
 	} else {
@@ -86,13 +188,21 @@ func (ou *ObjectUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (ou *ObjectUpdate) defaults() {
+	if _, ok := ou.mutation.UpdatedAt(); !ok {
+		v := object.UpdateDefaultUpdatedAt()
+		ou.mutation.SetUpdatedAt(v)
+	}
+}
+
 func (ou *ObjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   object.Table,
 			Columns: object.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: object.FieldID,
 			},
 		},
@@ -103,6 +213,96 @@ func (ou *ObjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := ou.mutation.CreatedBy(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: object.FieldCreatedBy,
+		})
+	}
+	if value, ok := ou.mutation.AddedCreatedBy(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: object.FieldCreatedBy,
+		})
+	}
+	if value, ok := ou.mutation.UpdatedBy(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: object.FieldUpdatedBy,
+		})
+	}
+	if value, ok := ou.mutation.AddedUpdatedBy(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: object.FieldUpdatedBy,
+		})
+	}
+	if value, ok := ou.mutation.UpdatedAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: object.FieldUpdatedAt,
+		})
+	}
+	if value, ok := ou.mutation.DeletedAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: object.FieldDeletedAt,
+		})
+	}
+	if ou.mutation.DeletedAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: object.FieldDeletedAt,
+		})
+	}
+	if value, ok := ou.mutation.URL(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: object.FieldURL,
+		})
+	}
+	if ou.mutation.UserCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   object.UserTable,
+			Columns: []string{object.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   object.UserTable,
+			Columns: []string{object.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ou.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -123,9 +323,108 @@ type ObjectUpdateOne struct {
 	mutation *ObjectMutation
 }
 
+// SetCreatedBy sets the "created_by" field.
+func (ouo *ObjectUpdateOne) SetCreatedBy(i int64) *ObjectUpdateOne {
+	ouo.mutation.ResetCreatedBy()
+	ouo.mutation.SetCreatedBy(i)
+	return ouo
+}
+
+// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
+func (ouo *ObjectUpdateOne) SetNillableCreatedBy(i *int64) *ObjectUpdateOne {
+	if i != nil {
+		ouo.SetCreatedBy(*i)
+	}
+	return ouo
+}
+
+// AddCreatedBy adds i to the "created_by" field.
+func (ouo *ObjectUpdateOne) AddCreatedBy(i int64) *ObjectUpdateOne {
+	ouo.mutation.AddCreatedBy(i)
+	return ouo
+}
+
+// SetUpdatedBy sets the "updated_by" field.
+func (ouo *ObjectUpdateOne) SetUpdatedBy(i int64) *ObjectUpdateOne {
+	ouo.mutation.ResetUpdatedBy()
+	ouo.mutation.SetUpdatedBy(i)
+	return ouo
+}
+
+// SetNillableUpdatedBy sets the "updated_by" field if the given value is not nil.
+func (ouo *ObjectUpdateOne) SetNillableUpdatedBy(i *int64) *ObjectUpdateOne {
+	if i != nil {
+		ouo.SetUpdatedBy(*i)
+	}
+	return ouo
+}
+
+// AddUpdatedBy adds i to the "updated_by" field.
+func (ouo *ObjectUpdateOne) AddUpdatedBy(i int64) *ObjectUpdateOne {
+	ouo.mutation.AddUpdatedBy(i)
+	return ouo
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (ouo *ObjectUpdateOne) SetUpdatedAt(t time.Time) *ObjectUpdateOne {
+	ouo.mutation.SetUpdatedAt(t)
+	return ouo
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (ouo *ObjectUpdateOne) SetDeletedAt(t time.Time) *ObjectUpdateOne {
+	ouo.mutation.SetDeletedAt(t)
+	return ouo
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (ouo *ObjectUpdateOne) SetNillableDeletedAt(t *time.Time) *ObjectUpdateOne {
+	if t != nil {
+		ouo.SetDeletedAt(*t)
+	}
+	return ouo
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (ouo *ObjectUpdateOne) ClearDeletedAt() *ObjectUpdateOne {
+	ouo.mutation.ClearDeletedAt()
+	return ouo
+}
+
+// SetURL sets the "url" field.
+func (ouo *ObjectUpdateOne) SetURL(s string) *ObjectUpdateOne {
+	ouo.mutation.SetURL(s)
+	return ouo
+}
+
+// SetUserID sets the "user" edge to the User entity by ID.
+func (ouo *ObjectUpdateOne) SetUserID(id int64) *ObjectUpdateOne {
+	ouo.mutation.SetUserID(id)
+	return ouo
+}
+
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
+func (ouo *ObjectUpdateOne) SetNillableUserID(id *int64) *ObjectUpdateOne {
+	if id != nil {
+		ouo = ouo.SetUserID(*id)
+	}
+	return ouo
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (ouo *ObjectUpdateOne) SetUser(u *User) *ObjectUpdateOne {
+	return ouo.SetUserID(u.ID)
+}
+
 // Mutation returns the ObjectMutation object of the builder.
 func (ouo *ObjectUpdateOne) Mutation() *ObjectMutation {
 	return ouo.mutation
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (ouo *ObjectUpdateOne) ClearUser() *ObjectUpdateOne {
+	ouo.mutation.ClearUser()
+	return ouo
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -141,6 +440,7 @@ func (ouo *ObjectUpdateOne) Save(ctx context.Context) (*Object, error) {
 		err  error
 		node *Object
 	)
+	ouo.defaults()
 	if len(ouo.hooks) == 0 {
 		node, err = ouo.sqlSave(ctx)
 	} else {
@@ -195,13 +495,21 @@ func (ouo *ObjectUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (ouo *ObjectUpdateOne) defaults() {
+	if _, ok := ouo.mutation.UpdatedAt(); !ok {
+		v := object.UpdateDefaultUpdatedAt()
+		ouo.mutation.SetUpdatedAt(v)
+	}
+}
+
 func (ouo *ObjectUpdateOne) sqlSave(ctx context.Context) (_node *Object, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   object.Table,
 			Columns: object.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: object.FieldID,
 			},
 		},
@@ -229,6 +537,96 @@ func (ouo *ObjectUpdateOne) sqlSave(ctx context.Context) (_node *Object, err err
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := ouo.mutation.CreatedBy(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: object.FieldCreatedBy,
+		})
+	}
+	if value, ok := ouo.mutation.AddedCreatedBy(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: object.FieldCreatedBy,
+		})
+	}
+	if value, ok := ouo.mutation.UpdatedBy(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: object.FieldUpdatedBy,
+		})
+	}
+	if value, ok := ouo.mutation.AddedUpdatedBy(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: object.FieldUpdatedBy,
+		})
+	}
+	if value, ok := ouo.mutation.UpdatedAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: object.FieldUpdatedAt,
+		})
+	}
+	if value, ok := ouo.mutation.DeletedAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: object.FieldDeletedAt,
+		})
+	}
+	if ouo.mutation.DeletedAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: object.FieldDeletedAt,
+		})
+	}
+	if value, ok := ouo.mutation.URL(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: object.FieldURL,
+		})
+	}
+	if ouo.mutation.UserCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   object.UserTable,
+			Columns: []string{object.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   object.UserTable,
+			Columns: []string{object.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Object{config: ouo.config}
 	_spec.Assign = _node.assignValues

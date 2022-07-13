@@ -83,8 +83,8 @@ func (dq *DirectoryQuery) FirstX(ctx context.Context) *Directory {
 
 // FirstID returns the first Directory ID from the query.
 // Returns a *NotFoundError when no Directory ID was found.
-func (dq *DirectoryQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (dq *DirectoryQuery) FirstID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = dq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -96,7 +96,7 @@ func (dq *DirectoryQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (dq *DirectoryQuery) FirstIDX(ctx context.Context) int {
+func (dq *DirectoryQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := dq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -134,8 +134,8 @@ func (dq *DirectoryQuery) OnlyX(ctx context.Context) *Directory {
 // OnlyID is like Only, but returns the only Directory ID in the query.
 // Returns a *NotSingularError when more than one Directory ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (dq *DirectoryQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (dq *DirectoryQuery) OnlyID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = dq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -151,7 +151,7 @@ func (dq *DirectoryQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (dq *DirectoryQuery) OnlyIDX(ctx context.Context) int {
+func (dq *DirectoryQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := dq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -177,8 +177,8 @@ func (dq *DirectoryQuery) AllX(ctx context.Context) []*Directory {
 }
 
 // IDs executes the query and returns a list of Directory IDs.
-func (dq *DirectoryQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
+func (dq *DirectoryQuery) IDs(ctx context.Context) ([]int64, error) {
+	var ids []int64
 	if err := dq.Select(directory.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -186,7 +186,7 @@ func (dq *DirectoryQuery) IDs(ctx context.Context) ([]int, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (dq *DirectoryQuery) IDsX(ctx context.Context) []int {
+func (dq *DirectoryQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := dq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -249,6 +249,19 @@ func (dq *DirectoryQuery) Clone() *DirectoryQuery {
 
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
+//
+// Example:
+//
+//	var v []struct {
+//		CreatedBy int64 `json:"created_by,omitempty"`
+//		Count int `json:"count,omitempty"`
+//	}
+//
+//	client.Directory.Query().
+//		GroupBy(directory.FieldCreatedBy).
+//		Aggregate(ent.Count()).
+//		Scan(ctx, &v)
+//
 func (dq *DirectoryQuery) GroupBy(field string, fields ...string) *DirectoryGroupBy {
 	grbuild := &DirectoryGroupBy{config: dq.config}
 	grbuild.fields = append([]string{field}, fields...)
@@ -265,6 +278,17 @@ func (dq *DirectoryQuery) GroupBy(field string, fields ...string) *DirectoryGrou
 
 // Select allows the selection one or more fields/columns for the given query,
 // instead of selecting all fields in the entity.
+//
+// Example:
+//
+//	var v []struct {
+//		CreatedBy int64 `json:"created_by,omitempty"`
+//	}
+//
+//	client.Directory.Query().
+//		Select(directory.FieldCreatedBy).
+//		Scan(ctx, &v)
+//
 func (dq *DirectoryQuery) Select(fields ...string) *DirectorySelect {
 	dq.fields = append(dq.fields, fields...)
 	selbuild := &DirectorySelect{DirectoryQuery: dq}
@@ -337,7 +361,7 @@ func (dq *DirectoryQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   directory.Table,
 			Columns: directory.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: directory.FieldID,
 			},
 		},

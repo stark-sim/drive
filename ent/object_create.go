@@ -5,7 +5,10 @@ package ent
 import (
 	"context"
 	"drive/ent/object"
+	"drive/ent/user"
+	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -16,6 +19,115 @@ type ObjectCreate struct {
 	config
 	mutation *ObjectMutation
 	hooks    []Hook
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (oc *ObjectCreate) SetCreatedBy(i int64) *ObjectCreate {
+	oc.mutation.SetCreatedBy(i)
+	return oc
+}
+
+// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
+func (oc *ObjectCreate) SetNillableCreatedBy(i *int64) *ObjectCreate {
+	if i != nil {
+		oc.SetCreatedBy(*i)
+	}
+	return oc
+}
+
+// SetUpdatedBy sets the "updated_by" field.
+func (oc *ObjectCreate) SetUpdatedBy(i int64) *ObjectCreate {
+	oc.mutation.SetUpdatedBy(i)
+	return oc
+}
+
+// SetNillableUpdatedBy sets the "updated_by" field if the given value is not nil.
+func (oc *ObjectCreate) SetNillableUpdatedBy(i *int64) *ObjectCreate {
+	if i != nil {
+		oc.SetUpdatedBy(*i)
+	}
+	return oc
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (oc *ObjectCreate) SetCreatedAt(t time.Time) *ObjectCreate {
+	oc.mutation.SetCreatedAt(t)
+	return oc
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (oc *ObjectCreate) SetNillableCreatedAt(t *time.Time) *ObjectCreate {
+	if t != nil {
+		oc.SetCreatedAt(*t)
+	}
+	return oc
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (oc *ObjectCreate) SetUpdatedAt(t time.Time) *ObjectCreate {
+	oc.mutation.SetUpdatedAt(t)
+	return oc
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (oc *ObjectCreate) SetNillableUpdatedAt(t *time.Time) *ObjectCreate {
+	if t != nil {
+		oc.SetUpdatedAt(*t)
+	}
+	return oc
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (oc *ObjectCreate) SetDeletedAt(t time.Time) *ObjectCreate {
+	oc.mutation.SetDeletedAt(t)
+	return oc
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (oc *ObjectCreate) SetNillableDeletedAt(t *time.Time) *ObjectCreate {
+	if t != nil {
+		oc.SetDeletedAt(*t)
+	}
+	return oc
+}
+
+// SetURL sets the "url" field.
+func (oc *ObjectCreate) SetURL(s string) *ObjectCreate {
+	oc.mutation.SetURL(s)
+	return oc
+}
+
+// SetID sets the "id" field.
+func (oc *ObjectCreate) SetID(i int64) *ObjectCreate {
+	oc.mutation.SetID(i)
+	return oc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (oc *ObjectCreate) SetNillableID(i *int64) *ObjectCreate {
+	if i != nil {
+		oc.SetID(*i)
+	}
+	return oc
+}
+
+// SetUserID sets the "user" edge to the User entity by ID.
+func (oc *ObjectCreate) SetUserID(id int64) *ObjectCreate {
+	oc.mutation.SetUserID(id)
+	return oc
+}
+
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
+func (oc *ObjectCreate) SetNillableUserID(id *int64) *ObjectCreate {
+	if id != nil {
+		oc = oc.SetUserID(*id)
+	}
+	return oc
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (oc *ObjectCreate) SetUser(u *User) *ObjectCreate {
+	return oc.SetUserID(u.ID)
 }
 
 // Mutation returns the ObjectMutation object of the builder.
@@ -29,6 +141,7 @@ func (oc *ObjectCreate) Save(ctx context.Context) (*Object, error) {
 		err  error
 		node *Object
 	)
+	oc.defaults()
 	if len(oc.hooks) == 0 {
 		if err = oc.check(); err != nil {
 			return nil, err
@@ -92,8 +205,47 @@ func (oc *ObjectCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (oc *ObjectCreate) defaults() {
+	if _, ok := oc.mutation.CreatedBy(); !ok {
+		v := object.DefaultCreatedBy
+		oc.mutation.SetCreatedBy(v)
+	}
+	if _, ok := oc.mutation.UpdatedBy(); !ok {
+		v := object.DefaultUpdatedBy
+		oc.mutation.SetUpdatedBy(v)
+	}
+	if _, ok := oc.mutation.CreatedAt(); !ok {
+		v := object.DefaultCreatedAt()
+		oc.mutation.SetCreatedAt(v)
+	}
+	if _, ok := oc.mutation.UpdatedAt(); !ok {
+		v := object.DefaultUpdatedAt()
+		oc.mutation.SetUpdatedAt(v)
+	}
+	if _, ok := oc.mutation.ID(); !ok {
+		v := object.DefaultID
+		oc.mutation.SetID(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (oc *ObjectCreate) check() error {
+	if _, ok := oc.mutation.CreatedBy(); !ok {
+		return &ValidationError{Name: "created_by", err: errors.New(`ent: missing required field "Object.created_by"`)}
+	}
+	if _, ok := oc.mutation.UpdatedBy(); !ok {
+		return &ValidationError{Name: "updated_by", err: errors.New(`ent: missing required field "Object.updated_by"`)}
+	}
+	if _, ok := oc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Object.created_at"`)}
+	}
+	if _, ok := oc.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Object.updated_at"`)}
+	}
+	if _, ok := oc.mutation.URL(); !ok {
+		return &ValidationError{Name: "url", err: errors.New(`ent: missing required field "Object.url"`)}
+	}
 	return nil
 }
 
@@ -105,8 +257,10 @@ func (oc *ObjectCreate) sqlSave(ctx context.Context) (*Object, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int64(id)
+	}
 	return _node, nil
 }
 
@@ -116,11 +270,83 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: object.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: object.FieldID,
 			},
 		}
 	)
+	if id, ok := oc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
+	if value, ok := oc.mutation.CreatedBy(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: object.FieldCreatedBy,
+		})
+		_node.CreatedBy = value
+	}
+	if value, ok := oc.mutation.UpdatedBy(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: object.FieldUpdatedBy,
+		})
+		_node.UpdatedBy = value
+	}
+	if value, ok := oc.mutation.CreatedAt(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: object.FieldCreatedAt,
+		})
+		_node.CreatedAt = value
+	}
+	if value, ok := oc.mutation.UpdatedAt(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: object.FieldUpdatedAt,
+		})
+		_node.UpdatedAt = value
+	}
+	if value, ok := oc.mutation.DeletedAt(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: object.FieldDeletedAt,
+		})
+		_node.DeletedAt = value
+	}
+	if value, ok := oc.mutation.URL(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: object.FieldURL,
+		})
+		_node.URL = value
+	}
+	if nodes := oc.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   object.UserTable,
+			Columns: []string{object.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.user_objects = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -138,6 +364,7 @@ func (ocb *ObjectCreateBulk) Save(ctx context.Context) ([]*Object, error) {
 	for i := range ocb.builders {
 		func(i int, root context.Context) {
 			builder := ocb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*ObjectMutation)
 				if !ok {
@@ -164,9 +391,9 @@ func (ocb *ObjectCreateBulk) Save(ctx context.Context) ([]*Object, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
+					nodes[i].ID = int64(id)
 				}
 				mutation.done = true
 				return nodes[i], nil

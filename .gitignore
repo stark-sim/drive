@@ -27,3 +27,6 @@ out/
 # log
 /logger/log_files/
 *.log
+
+# config
+config.yaml

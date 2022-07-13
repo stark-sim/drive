@@ -6,6 +6,7 @@ import (
 	"context"
 	"drive/ent/object"
 	"drive/ent/predicate"
+	"drive/ent/user"
 	"fmt"
 	"math"
 
@@ -23,6 +24,9 @@ type ObjectQuery struct {
 	order      []OrderFunc
 	fields     []string
 	predicates []predicate.Object
+	// eager-loading edges.
+	withUser *UserQuery
+	withFKs  bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -59,6 +63,28 @@ func (oq *ObjectQuery) Order(o ...OrderFunc) *ObjectQuery {
 	return oq
 }
 
+// QueryUser chains the current query on the "user" edge.
+func (oq *ObjectQuery) QueryUser() *UserQuery {
+	query := &UserQuery{config: oq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := oq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := oq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(object.Table, object.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, object.UserTable, object.UserColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Object entity from the query.
 // Returns a *NotFoundError when no Object was found.
 func (oq *ObjectQuery) First(ctx context.Context) (*Object, error) {
@@ -83,8 +109,8 @@ func (oq *ObjectQuery) FirstX(ctx context.Context) *Object {
 
 // FirstID returns the first Object ID from the query.
 // Returns a *NotFoundError when no Object ID was found.
-func (oq *ObjectQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (oq *ObjectQuery) FirstID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = oq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -96,7 +122,7 @@ func (oq *ObjectQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (oq *ObjectQuery) FirstIDX(ctx context.Context) int {
+func (oq *ObjectQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := oq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -134,8 +160,8 @@ func (oq *ObjectQuery) OnlyX(ctx context.Context) *Object {
 // OnlyID is like Only, but returns the only Object ID in the query.
 // Returns a *NotSingularError when more than one Object ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (oq *ObjectQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (oq *ObjectQuery) OnlyID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = oq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -151,7 +177,7 @@ func (oq *ObjectQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (oq *ObjectQuery) OnlyIDX(ctx context.Context) int {
+func (oq *ObjectQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := oq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -177,8 +203,8 @@ func (oq *ObjectQuery) AllX(ctx context.Context) []*Object {
 }
 
 // IDs executes the query and returns a list of Object IDs.
-func (oq *ObjectQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
+func (oq *ObjectQuery) IDs(ctx context.Context) ([]int64, error) {
+	var ids []int64
 	if err := oq.Select(object.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -186,7 +212,7 @@ func (oq *ObjectQuery) IDs(ctx context.Context) ([]int, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (oq *ObjectQuery) IDsX(ctx context.Context) []int {
+func (oq *ObjectQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := oq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -240,6 +266,7 @@ func (oq *ObjectQuery) Clone() *ObjectQuery {
 		offset:     oq.offset,
 		order:      append([]OrderFunc{}, oq.order...),
 		predicates: append([]predicate.Object{}, oq.predicates...),
+		withUser:   oq.withUser.Clone(),
 		// clone intermediate query.
 		sql:    oq.sql.Clone(),
 		path:   oq.path,
@@ -247,8 +274,32 @@ func (oq *ObjectQuery) Clone() *ObjectQuery {
 	}
 }
 
+// WithUser tells the query-builder to eager-load the nodes that are connected to
+// the "user" edge. The optional arguments are used to configure the query builder of the edge.
+func (oq *ObjectQuery) WithUser(opts ...func(*UserQuery)) *ObjectQuery {
+	query := &UserQuery{config: oq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	oq.withUser = query
+	return oq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
+//
+// Example:
+//
+//	var v []struct {
+//		CreatedBy int64 `json:"created_by,omitempty"`
+//		Count int `json:"count,omitempty"`
+//	}
+//
+//	client.Object.Query().
+//		GroupBy(object.FieldCreatedBy).
+//		Aggregate(ent.Count()).
+//		Scan(ctx, &v)
+//
 func (oq *ObjectQuery) GroupBy(field string, fields ...string) *ObjectGroupBy {
 	grbuild := &ObjectGroupBy{config: oq.config}
 	grbuild.fields = append([]string{field}, fields...)
@@ -265,6 +316,17 @@ func (oq *ObjectQuery) GroupBy(field string, fields ...string) *ObjectGroupBy {
 
 // Select allows the selection one or more fields/columns for the given query,
 // instead of selecting all fields in the entity.
+//
+// Example:
+//
+//	var v []struct {
+//		CreatedBy int64 `json:"created_by,omitempty"`
+//	}
+//
+//	client.Object.Query().
+//		Select(object.FieldCreatedBy).
+//		Scan(ctx, &v)
+//
 func (oq *ObjectQuery) Select(fields ...string) *ObjectSelect {
 	oq.fields = append(oq.fields, fields...)
 	selbuild := &ObjectSelect{ObjectQuery: oq}
@@ -291,15 +353,26 @@ func (oq *ObjectQuery) prepareQuery(ctx context.Context) error {
 
 func (oq *ObjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Object, error) {
 	var (
-		nodes = []*Object{}
-		_spec = oq.querySpec()
+		nodes       = []*Object{}
+		withFKs     = oq.withFKs
+		_spec       = oq.querySpec()
+		loadedTypes = [1]bool{
+			oq.withUser != nil,
+		}
 	)
+	if oq.withUser != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, object.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		return (*Object).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []interface{}) error {
 		node := &Object{config: oq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -311,6 +384,36 @@ func (oq *ObjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Objec
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+
+	if query := oq.withUser; query != nil {
+		ids := make([]int64, 0, len(nodes))
+		nodeids := make(map[int64][]*Object)
+		for i := range nodes {
+			if nodes[i].user_objects == nil {
+				continue
+			}
+			fk := *nodes[i].user_objects
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
+		}
+		query.Where(user.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "user_objects" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.User = n
+			}
+		}
+	}
+
 	return nodes, nil
 }
 
@@ -337,7 +440,7 @@ func (oq *ObjectQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   object.Table,
 			Columns: object.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: object.FieldID,
 			},
 		},

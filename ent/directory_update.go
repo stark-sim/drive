@@ -8,6 +8,7 @@ import (
 	"drive/ent/predicate"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -27,6 +28,80 @@ func (du *DirectoryUpdate) Where(ps ...predicate.Directory) *DirectoryUpdate {
 	return du
 }
 
+// SetCreatedBy sets the "created_by" field.
+func (du *DirectoryUpdate) SetCreatedBy(i int64) *DirectoryUpdate {
+	du.mutation.ResetCreatedBy()
+	du.mutation.SetCreatedBy(i)
+	return du
+}
+
+// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
+func (du *DirectoryUpdate) SetNillableCreatedBy(i *int64) *DirectoryUpdate {
+	if i != nil {
+		du.SetCreatedBy(*i)
+	}
+	return du
+}
+
+// AddCreatedBy adds i to the "created_by" field.
+func (du *DirectoryUpdate) AddCreatedBy(i int64) *DirectoryUpdate {
+	du.mutation.AddCreatedBy(i)
+	return du
+}
+
+// SetUpdatedBy sets the "updated_by" field.
+func (du *DirectoryUpdate) SetUpdatedBy(i int64) *DirectoryUpdate {
+	du.mutation.ResetUpdatedBy()
+	du.mutation.SetUpdatedBy(i)
+	return du
+}
+
+// SetNillableUpdatedBy sets the "updated_by" field if the given value is not nil.
+func (du *DirectoryUpdate) SetNillableUpdatedBy(i *int64) *DirectoryUpdate {
+	if i != nil {
+		du.SetUpdatedBy(*i)
+	}
+	return du
+}
+
+// AddUpdatedBy adds i to the "updated_by" field.
+func (du *DirectoryUpdate) AddUpdatedBy(i int64) *DirectoryUpdate {
+	du.mutation.AddUpdatedBy(i)
+	return du
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (du *DirectoryUpdate) SetUpdatedAt(t time.Time) *DirectoryUpdate {
+	du.mutation.SetUpdatedAt(t)
+	return du
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (du *DirectoryUpdate) SetDeletedAt(t time.Time) *DirectoryUpdate {
+	du.mutation.SetDeletedAt(t)
+	return du
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (du *DirectoryUpdate) SetNillableDeletedAt(t *time.Time) *DirectoryUpdate {
+	if t != nil {
+		du.SetDeletedAt(*t)
+	}
+	return du
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (du *DirectoryUpdate) ClearDeletedAt() *DirectoryUpdate {
+	du.mutation.ClearDeletedAt()
+	return du
+}
+
+// SetName sets the "name" field.
+func (du *DirectoryUpdate) SetName(s string) *DirectoryUpdate {
+	du.mutation.SetName(s)
+	return du
+}
+
 // Mutation returns the DirectoryMutation object of the builder.
 func (du *DirectoryUpdate) Mutation() *DirectoryMutation {
 	return du.mutation
@@ -38,6 +113,7 @@ func (du *DirectoryUpdate) Save(ctx context.Context) (int, error) {
 		err      error
 		affected int
 	)
+	du.defaults()
 	if len(du.hooks) == 0 {
 		affected, err = du.sqlSave(ctx)
 	} else {
@@ -86,13 +162,21 @@ func (du *DirectoryUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (du *DirectoryUpdate) defaults() {
+	if _, ok := du.mutation.UpdatedAt(); !ok {
+		v := directory.UpdateDefaultUpdatedAt()
+		du.mutation.SetUpdatedAt(v)
+	}
+}
+
 func (du *DirectoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   directory.Table,
 			Columns: directory.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: directory.FieldID,
 			},
 		},
@@ -103,6 +187,61 @@ func (du *DirectoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := du.mutation.CreatedBy(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: directory.FieldCreatedBy,
+		})
+	}
+	if value, ok := du.mutation.AddedCreatedBy(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: directory.FieldCreatedBy,
+		})
+	}
+	if value, ok := du.mutation.UpdatedBy(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: directory.FieldUpdatedBy,
+		})
+	}
+	if value, ok := du.mutation.AddedUpdatedBy(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: directory.FieldUpdatedBy,
+		})
+	}
+	if value, ok := du.mutation.UpdatedAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: directory.FieldUpdatedAt,
+		})
+	}
+	if value, ok := du.mutation.DeletedAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: directory.FieldDeletedAt,
+		})
+	}
+	if du.mutation.DeletedAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: directory.FieldDeletedAt,
+		})
+	}
+	if value, ok := du.mutation.Name(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: directory.FieldName,
+		})
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, du.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -123,6 +262,80 @@ type DirectoryUpdateOne struct {
 	mutation *DirectoryMutation
 }
 
+// SetCreatedBy sets the "created_by" field.
+func (duo *DirectoryUpdateOne) SetCreatedBy(i int64) *DirectoryUpdateOne {
+	duo.mutation.ResetCreatedBy()
+	duo.mutation.SetCreatedBy(i)
+	return duo
+}
+
+// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
+func (duo *DirectoryUpdateOne) SetNillableCreatedBy(i *int64) *DirectoryUpdateOne {
+	if i != nil {
+		duo.SetCreatedBy(*i)
+	}
+	return duo
+}
+
+// AddCreatedBy adds i to the "created_by" field.
+func (duo *DirectoryUpdateOne) AddCreatedBy(i int64) *DirectoryUpdateOne {
+	duo.mutation.AddCreatedBy(i)
+	return duo
+}
+
+// SetUpdatedBy sets the "updated_by" field.
+func (duo *DirectoryUpdateOne) SetUpdatedBy(i int64) *DirectoryUpdateOne {
+	duo.mutation.ResetUpdatedBy()
+	duo.mutation.SetUpdatedBy(i)
+	return duo
+}
+
+// SetNillableUpdatedBy sets the "updated_by" field if the given value is not nil.
+func (duo *DirectoryUpdateOne) SetNillableUpdatedBy(i *int64) *DirectoryUpdateOne {
+	if i != nil {
+		duo.SetUpdatedBy(*i)
+	}
+	return duo
+}
+
+// AddUpdatedBy adds i to the "updated_by" field.
+func (duo *DirectoryUpdateOne) AddUpdatedBy(i int64) *DirectoryUpdateOne {
+	duo.mutation.AddUpdatedBy(i)
+	return duo
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (duo *DirectoryUpdateOne) SetUpdatedAt(t time.Time) *DirectoryUpdateOne {
+	duo.mutation.SetUpdatedAt(t)
+	return duo
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (duo *DirectoryUpdateOne) SetDeletedAt(t time.Time) *DirectoryUpdateOne {
+	duo.mutation.SetDeletedAt(t)
+	return duo
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (duo *DirectoryUpdateOne) SetNillableDeletedAt(t *time.Time) *DirectoryUpdateOne {
+	if t != nil {
+		duo.SetDeletedAt(*t)
+	}
+	return duo
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (duo *DirectoryUpdateOne) ClearDeletedAt() *DirectoryUpdateOne {
+	duo.mutation.ClearDeletedAt()
+	return duo
+}
+
+// SetName sets the "name" field.
+func (duo *DirectoryUpdateOne) SetName(s string) *DirectoryUpdateOne {
+	duo.mutation.SetName(s)
+	return duo
+}
+
 // Mutation returns the DirectoryMutation object of the builder.
 func (duo *DirectoryUpdateOne) Mutation() *DirectoryMutation {
 	return duo.mutation
@@ -141,6 +354,7 @@ func (duo *DirectoryUpdateOne) Save(ctx context.Context) (*Directory, error) {
 		err  error
 		node *Directory
 	)
+	duo.defaults()
 	if len(duo.hooks) == 0 {
 		node, err = duo.sqlSave(ctx)
 	} else {
@@ -195,13 +409,21 @@ func (duo *DirectoryUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (duo *DirectoryUpdateOne) defaults() {
+	if _, ok := duo.mutation.UpdatedAt(); !ok {
+		v := directory.UpdateDefaultUpdatedAt()
+		duo.mutation.SetUpdatedAt(v)
+	}
+}
+
 func (duo *DirectoryUpdateOne) sqlSave(ctx context.Context) (_node *Directory, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   directory.Table,
 			Columns: directory.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: directory.FieldID,
 			},
 		},
@@ -229,6 +451,61 @@ func (duo *DirectoryUpdateOne) sqlSave(ctx context.Context) (_node *Directory, e
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := duo.mutation.CreatedBy(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: directory.FieldCreatedBy,
+		})
+	}
+	if value, ok := duo.mutation.AddedCreatedBy(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: directory.FieldCreatedBy,
+		})
+	}
+	if value, ok := duo.mutation.UpdatedBy(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: directory.FieldUpdatedBy,
+		})
+	}
+	if value, ok := duo.mutation.AddedUpdatedBy(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: directory.FieldUpdatedBy,
+		})
+	}
+	if value, ok := duo.mutation.UpdatedAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: directory.FieldUpdatedAt,
+		})
+	}
+	if value, ok := duo.mutation.DeletedAt(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: directory.FieldDeletedAt,
+		})
+	}
+	if duo.mutation.DeletedAtCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: directory.FieldDeletedAt,
+		})
+	}
+	if value, ok := duo.mutation.Name(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: directory.FieldName,
+		})
 	}
 	_node = &Directory{config: duo.config}
 	_spec.Assign = _node.assignValues

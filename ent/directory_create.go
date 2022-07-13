@@ -5,7 +5,9 @@ package ent
 import (
 	"context"
 	"drive/ent/directory"
+	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -16,6 +18,96 @@ type DirectoryCreate struct {
 	config
 	mutation *DirectoryMutation
 	hooks    []Hook
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (dc *DirectoryCreate) SetCreatedBy(i int64) *DirectoryCreate {
+	dc.mutation.SetCreatedBy(i)
+	return dc
+}
+
+// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
+func (dc *DirectoryCreate) SetNillableCreatedBy(i *int64) *DirectoryCreate {
+	if i != nil {
+		dc.SetCreatedBy(*i)
+	}
+	return dc
+}
+
+// SetUpdatedBy sets the "updated_by" field.
+func (dc *DirectoryCreate) SetUpdatedBy(i int64) *DirectoryCreate {
+	dc.mutation.SetUpdatedBy(i)
+	return dc
+}
+
+// SetNillableUpdatedBy sets the "updated_by" field if the given value is not nil.
+func (dc *DirectoryCreate) SetNillableUpdatedBy(i *int64) *DirectoryCreate {
+	if i != nil {
+		dc.SetUpdatedBy(*i)
+	}
+	return dc
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (dc *DirectoryCreate) SetCreatedAt(t time.Time) *DirectoryCreate {
+	dc.mutation.SetCreatedAt(t)
+	return dc
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (dc *DirectoryCreate) SetNillableCreatedAt(t *time.Time) *DirectoryCreate {
+	if t != nil {
+		dc.SetCreatedAt(*t)
+	}
+	return dc
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (dc *DirectoryCreate) SetUpdatedAt(t time.Time) *DirectoryCreate {
+	dc.mutation.SetUpdatedAt(t)
+	return dc
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (dc *DirectoryCreate) SetNillableUpdatedAt(t *time.Time) *DirectoryCreate {
+	if t != nil {
+		dc.SetUpdatedAt(*t)
+	}
+	return dc
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (dc *DirectoryCreate) SetDeletedAt(t time.Time) *DirectoryCreate {
+	dc.mutation.SetDeletedAt(t)
+	return dc
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (dc *DirectoryCreate) SetNillableDeletedAt(t *time.Time) *DirectoryCreate {
+	if t != nil {
+		dc.SetDeletedAt(*t)
+	}
+	return dc
+}
+
+// SetName sets the "name" field.
+func (dc *DirectoryCreate) SetName(s string) *DirectoryCreate {
+	dc.mutation.SetName(s)
+	return dc
+}
+
+// SetID sets the "id" field.
+func (dc *DirectoryCreate) SetID(i int64) *DirectoryCreate {
+	dc.mutation.SetID(i)
+	return dc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (dc *DirectoryCreate) SetNillableID(i *int64) *DirectoryCreate {
+	if i != nil {
+		dc.SetID(*i)
+	}
+	return dc
 }
 
 // Mutation returns the DirectoryMutation object of the builder.
@@ -29,6 +121,7 @@ func (dc *DirectoryCreate) Save(ctx context.Context) (*Directory, error) {
 		err  error
 		node *Directory
 	)
+	dc.defaults()
 	if len(dc.hooks) == 0 {
 		if err = dc.check(); err != nil {
 			return nil, err
@@ -92,8 +185,47 @@ func (dc *DirectoryCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (dc *DirectoryCreate) defaults() {
+	if _, ok := dc.mutation.CreatedBy(); !ok {
+		v := directory.DefaultCreatedBy
+		dc.mutation.SetCreatedBy(v)
+	}
+	if _, ok := dc.mutation.UpdatedBy(); !ok {
+		v := directory.DefaultUpdatedBy
+		dc.mutation.SetUpdatedBy(v)
+	}
+	if _, ok := dc.mutation.CreatedAt(); !ok {
+		v := directory.DefaultCreatedAt()
+		dc.mutation.SetCreatedAt(v)
+	}
+	if _, ok := dc.mutation.UpdatedAt(); !ok {
+		v := directory.DefaultUpdatedAt()
+		dc.mutation.SetUpdatedAt(v)
+	}
+	if _, ok := dc.mutation.ID(); !ok {
+		v := directory.DefaultID
+		dc.mutation.SetID(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (dc *DirectoryCreate) check() error {
+	if _, ok := dc.mutation.CreatedBy(); !ok {
+		return &ValidationError{Name: "created_by", err: errors.New(`ent: missing required field "Directory.created_by"`)}
+	}
+	if _, ok := dc.mutation.UpdatedBy(); !ok {
+		return &ValidationError{Name: "updated_by", err: errors.New(`ent: missing required field "Directory.updated_by"`)}
+	}
+	if _, ok := dc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Directory.created_at"`)}
+	}
+	if _, ok := dc.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Directory.updated_at"`)}
+	}
+	if _, ok := dc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Directory.name"`)}
+	}
 	return nil
 }
 
@@ -105,8 +237,10 @@ func (dc *DirectoryCreate) sqlSave(ctx context.Context) (*Directory, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int64(id)
+	}
 	return _node, nil
 }
 
@@ -116,11 +250,63 @@ func (dc *DirectoryCreate) createSpec() (*Directory, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: directory.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: directory.FieldID,
 			},
 		}
 	)
+	if id, ok := dc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
+	if value, ok := dc.mutation.CreatedBy(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: directory.FieldCreatedBy,
+		})
+		_node.CreatedBy = value
+	}
+	if value, ok := dc.mutation.UpdatedBy(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: directory.FieldUpdatedBy,
+		})
+		_node.UpdatedBy = value
+	}
+	if value, ok := dc.mutation.CreatedAt(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: directory.FieldCreatedAt,
+		})
+		_node.CreatedAt = value
+	}
+	if value, ok := dc.mutation.UpdatedAt(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: directory.FieldUpdatedAt,
+		})
+		_node.UpdatedAt = value
+	}
+	if value, ok := dc.mutation.DeletedAt(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  value,
+			Column: directory.FieldDeletedAt,
+		})
+		_node.DeletedAt = value
+	}
+	if value, ok := dc.mutation.Name(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: directory.FieldName,
+		})
+		_node.Name = value
+	}
 	return _node, _spec
 }
 
@@ -138,6 +324,7 @@ func (dcb *DirectoryCreateBulk) Save(ctx context.Context) ([]*Directory, error) 
 	for i := range dcb.builders {
 		func(i int, root context.Context) {
 			builder := dcb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*DirectoryMutation)
 				if !ok {
@@ -164,9 +351,9 @@ func (dcb *DirectoryCreateBulk) Save(ctx context.Context) ([]*Directory, error) 
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
+					nodes[i].ID = int64(id)
 				}
 				mutation.done = true
 				return nodes[i], nil
