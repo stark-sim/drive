@@ -12,6 +12,11 @@ var Conf = new(Config)
 type Config struct {
 	DBConfig `mapstructure:"db"`
 
+	Code `mapstructure:"code"`
+}
+
+type Code struct {
+	Invite string
 }
 
 type DBConfig struct {
