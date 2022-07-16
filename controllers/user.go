@@ -76,14 +76,14 @@ func UserGet(c *gin.Context) {
 			return
 		}
 
-		serializer := protos.Serializer{Model: user, IsMany: false}
+		serializer := protos.ModelSerializer{Model: user, IsPlural: false}
 		data := serializer.Serialize()
 
 		common.ResponseSuccess(c, data)
 	} else {
 		users, _ := services.UserRepository.List(c, nil)
 
-		serializer := protos.Serializer{Model: users, IsMany: true}
+		serializer := protos.ModelSerializer{Model: users, IsPlural: true}
 		data := serializer.Serialize()
 		common.ResponseSuccess(c, data)
 	}

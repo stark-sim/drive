@@ -6,18 +6,18 @@ import (
 	"strconv"
 )
 
-type Serializer struct {
-	Model  interface{}
-	IsMany bool
+type ModelSerializer struct {
+	Model    interface{}
+	IsPlural bool
 }
 
 type Serializable interface {
 	Serialize() interface{}
 }
 
-func (s *Serializer) Serialize() interface{} {
+func (s *ModelSerializer) Serialize() interface{} {
 
-	if s.IsMany {
+	if s.IsPlural {
 		var resList []map[string]interface{}
 		var res map[string]interface{}
 
