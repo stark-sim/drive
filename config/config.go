@@ -13,16 +13,22 @@ type Config struct {
 	DBConfig `mapstructure:"db"`
 
 	Code `mapstructure:"code"`
+
+	APIConfig `mapstructure:"api"`
 }
 
 type Code struct {
 	Invite string
 }
 
-type DBConfig struct {
-	Driver string
-	Host string
+type APIConfig struct {
 	Port int
+}
+
+type DBConfig struct {
+	Driver   string
+	Host     string
+	Port     int
 	Username string
 	Password string
 	Database string

@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"drive/controllers"
 	"drive/middleware"
 	"github.com/gin-gonic/gin"
 )
@@ -8,8 +9,8 @@ import (
 func Init() *gin.Engine {
 	r := gin.Default()
 
-	r.POST("/register")
-	r.GET("/login")
+	r.POST("/register", controllers.UserAdd)
+	//r.GET("/login")
 
 	v1 := r.Group("/v1")
 

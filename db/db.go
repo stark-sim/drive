@@ -17,7 +17,7 @@ import (
 
 var url = ""
 
-func Init()  {
+func Init() {
 	url = fmt.Sprintf("%s://%s:%s@%s:%v/%s?sslmode=disable&TimeZone=Asia/Shanghai",
 		config.Conf.DBConfig.Driver,
 		config.Conf.DBConfig.Username,
@@ -62,7 +62,7 @@ func migrateWithMigrationFiles() {
 	}
 }
 
-func NewDBClient() (*ent.Client, error) {
+func NewDBClient() *ent.Client {
 	dataSourceName := fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai",
 		config.Conf.DBConfig.Host, config.Conf.DBConfig.Port, config.Conf.Username, config.Conf.Password, config.Conf.Database)
 	logrus.Debugf("dsn: %v", dataSourceName)
@@ -70,7 +70,7 @@ func NewDBClient() (*ent.Client, error) {
 	client, err := ent.Open(config.Conf.DBConfig.Driver, dataSourceName)
 	if err != nil {
 		logrus.Errorf("failed at creating ent client with db %s, err: %v", dataSourceName, err)
-		return nil, err
+		return nil
 	}
-	return client, nil
+	return client
 }
