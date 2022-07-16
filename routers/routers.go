@@ -2,7 +2,6 @@ package routers
 
 import (
 	"drive/controllers"
-	"drive/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,7 +13,9 @@ func Init() *gin.Engine {
 
 	v1 := r.Group("/v1")
 
-	v1.Use(middleware.AuthMiddleware())
+	//v1.Use(middleware.AuthMiddleware())
+
+	v1.GET("/users", controllers.UserGet)
 
 	return r
 }

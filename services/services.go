@@ -2,12 +2,12 @@ package services
 
 import (
 	"drive/db"
-	"drive/services/user"
-	"drive/services/user/impl"
+	"drive/services/user_service"
+	"drive/services/user_service/impl"
 )
 
 var (
-	UserRepository user.Repository
+	UserRepository user_service.Repository
 )
 
 func Init() {

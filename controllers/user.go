@@ -6,6 +6,7 @@ import (
 	"drive/services"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"strconv"
 )
 
 /*
@@ -56,4 +57,19 @@ func UserAdd(c *gin.Context) {
 	}
 
 	common.ResponseSuccess(c, &user)
+}
+
+func UserGet(c *gin.Context) {
+
+	id := c.Query("id")
+	idStr, _ := strconv.ParseInt(id, 10, 64)
+
+	user, err := services.UserRepository.Get(c, idStr)
+	if err != nil {
+		logrus.Errorf("get user failed, err: %v", err.Error())
+		common.ResponseError(c, common.CodeServerDBError)
+		return
+	}
+
+	common.ResponseSuccess(c, user)
 }
