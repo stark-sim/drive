@@ -5,3 +5,7 @@ type UserAddReq struct {
 	Password string `json:"password,omitempty"`
 	Phone    string `json:"phone,omitempty"`
 }
+
+type UserGetReq struct {
+	Id int64 `form:"id"`
+}

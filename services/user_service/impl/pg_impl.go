@@ -26,13 +26,19 @@ func (p *pgImpl) Get(ctx context.Context, id int64) (res *ent.User, err error) {
 	return res, nil
 }
 
-func (p *pgImpl) Create(ctx context.Context, name string, password string, phone string) (res ent.User, err error) {
-	res = *p.dbClient.User.Create().SetName(name).SetPassword(password).SetPhone(phone).SaveX(ctx)
+func (p *pgImpl) Create(ctx context.Context, name string, password string, phone string) (res *ent.User, err error) {
+	res = p.dbClient.User.Create().SetName(name).SetPassword(password).SetPhone(phone).SaveX(ctx)
 
 	return res, nil
 }
 
-func (p *pgImpl) List(ctx context.Context, ids []int64) (res []ent.User, err error) {
-	//TODO implement me
-	panic("implement me")
+func (p *pgImpl) List(ctx context.Context, ids []int64) (res ent.Users, err error) {
+	query := p.dbClient.User.Query().Where(user.DeletedAtIsNil())
+	if ids != nil {
+		query = query.Where(user.IDIn(ids...))
+	}
+
+	res = query.AllX(ctx)
+
+	return res, nil
 }

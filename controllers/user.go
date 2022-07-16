@@ -6,7 +6,6 @@ import (
 	"drive/services"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"strconv"
 )
 
 /*
@@ -61,15 +60,32 @@ func UserAdd(c *gin.Context) {
 
 func UserGet(c *gin.Context) {
 
-	id := c.Query("id")
-	idStr, _ := strconv.ParseInt(id, 10, 64)
-
-	user, err := services.UserRepository.Get(c, idStr)
+	var req protos.UserGetReq
+	err := c.ShouldBindQuery(&req)
 	if err != nil {
-		logrus.Errorf("get user failed, err: %v", err.Error())
-		common.ResponseError(c, common.CodeServerDBError)
+		common.ResponseErrorWithMsg(c, common.CodeInvalidParams, err.Error())
 		return
 	}
 
-	common.ResponseSuccess(c, user)
+	if req.Id != 0 {
+
+		user, err := services.UserRepository.Get(c, req.Id)
+		if err != nil {
+			logrus.Errorf("get user failed, err: %v", err.Error())
+			common.ResponseError(c, common.CodeServerDBError)
+			return
+		}
+
+		serializer := protos.Serializer{Model: user, IsMany: false}
+		data := serializer.Serialize()
+
+		common.ResponseSuccess(c, data)
+	} else {
+		users, _ := services.UserRepository.List(c, nil)
+
+		serializer := protos.Serializer{Model: users, IsMany: true}
+		data := serializer.Serialize()
+		common.ResponseSuccess(c, data)
+	}
+
 }
