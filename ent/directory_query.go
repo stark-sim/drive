@@ -253,7 +253,7 @@ func (dq *DirectoryQuery) Clone() *DirectoryQuery {
 // Example:
 //
 //	var v []struct {
-//		CreatedBy int64 `json:"created_by,omitempty"`
+//		CreatedBy int64 `json:"created_by"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -282,7 +282,7 @@ func (dq *DirectoryQuery) GroupBy(field string, fields ...string) *DirectoryGrou
 // Example:
 //
 //	var v []struct {
-//		CreatedBy int64 `json:"created_by,omitempty"`
+//		CreatedBy int64 `json:"created_by"`
 //	}
 //
 //	client.Directory.Query().

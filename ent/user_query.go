@@ -291,7 +291,7 @@ func (uq *UserQuery) WithObjects(opts ...func(*ObjectQuery)) *UserQuery {
 // Example:
 //
 //	var v []struct {
-//		CreatedBy int64 `json:"created_by,omitempty"`
+//		CreatedBy int64 `json:"created_by"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -320,7 +320,7 @@ func (uq *UserQuery) GroupBy(field string, fields ...string) *UserGroupBy {
 // Example:
 //
 //	var v []struct {
-//		CreatedBy int64 `json:"created_by,omitempty"`
+//		CreatedBy int64 `json:"created_by"`
 //	}
 //
 //	client.User.Query().

@@ -18,9 +18,9 @@ type Object struct {
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
 	// CreatedBy holds the value of the "created_by" field.
-	CreatedBy int64 `json:"created_by,omitempty"`
+	CreatedBy int64 `json:"created_by"`
 	// UpdatedBy holds the value of the "updated_by" field.
-	UpdatedBy int64 `json:"updated_by,omitempty"`
+	UpdatedBy int64 `json:"updated_by"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.

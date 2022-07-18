@@ -291,7 +291,7 @@ func (oq *ObjectQuery) WithUser(opts ...func(*UserQuery)) *ObjectQuery {
 // Example:
 //
 //	var v []struct {
-//		CreatedBy int64 `json:"created_by,omitempty"`
+//		CreatedBy int64 `json:"created_by"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -320,7 +320,7 @@ func (oq *ObjectQuery) GroupBy(field string, fields ...string) *ObjectGroupBy {
 // Example:
 //
 //	var v []struct {
-//		CreatedBy int64 `json:"created_by,omitempty"`
+//		CreatedBy int64 `json:"created_by"`
 //	}
 //
 //	client.Object.Query().
