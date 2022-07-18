@@ -15,7 +15,7 @@ var (
 		{Name: "updated_by", Type: field.TypeInt64, Default: 0},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "deleted_at", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString},
 	}
 	// DirectoriesTable holds the schema information for the "directories" table.
@@ -31,7 +31,7 @@ var (
 		{Name: "updated_by", Type: field.TypeInt64, Default: 0},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "deleted_at", Type: field.TypeTime},
 		{Name: "url", Type: field.TypeString},
 		{Name: "user_objects", Type: field.TypeInt64, Nullable: true},
 	}
@@ -56,7 +56,7 @@ var (
 		{Name: "updated_by", Type: field.TypeInt64, Default: 0},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "deleted_at", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString, Default: "unknown"},
 		{Name: "password", Type: field.TypeString},
 		{Name: "phone", Type: field.TypeString},

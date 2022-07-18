@@ -8,7 +8,7 @@ import (
 
 var (
 	node *snowflake.Node
-	err error
+	err  error
 )
 
 func Init() error {

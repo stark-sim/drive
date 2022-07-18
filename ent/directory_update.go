@@ -90,12 +90,6 @@ func (du *DirectoryUpdate) SetNillableDeletedAt(t *time.Time) *DirectoryUpdate {
 	return du
 }
 
-// ClearDeletedAt clears the value of the "deleted_at" field.
-func (du *DirectoryUpdate) ClearDeletedAt() *DirectoryUpdate {
-	du.mutation.ClearDeletedAt()
-	return du
-}
-
 // SetName sets the "name" field.
 func (du *DirectoryUpdate) SetName(s string) *DirectoryUpdate {
 	du.mutation.SetName(s)
@@ -230,12 +224,6 @@ func (du *DirectoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: directory.FieldDeletedAt,
 		})
 	}
-	if du.mutation.DeletedAtCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Column: directory.FieldDeletedAt,
-		})
-	}
 	if value, ok := du.mutation.Name(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -321,12 +309,6 @@ func (duo *DirectoryUpdateOne) SetNillableDeletedAt(t *time.Time) *DirectoryUpda
 	if t != nil {
 		duo.SetDeletedAt(*t)
 	}
-	return duo
-}
-
-// ClearDeletedAt clears the value of the "deleted_at" field.
-func (duo *DirectoryUpdateOne) ClearDeletedAt() *DirectoryUpdateOne {
-	duo.mutation.ClearDeletedAt()
 	return duo
 }
 
@@ -491,12 +473,6 @@ func (duo *DirectoryUpdateOne) sqlSave(ctx context.Context) (_node *Directory, e
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  value,
-			Column: directory.FieldDeletedAt,
-		})
-	}
-	if duo.mutation.DeletedAtCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
 			Column: directory.FieldDeletedAt,
 		})
 	}

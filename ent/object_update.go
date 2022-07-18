@@ -91,12 +91,6 @@ func (ou *ObjectUpdate) SetNillableDeletedAt(t *time.Time) *ObjectUpdate {
 	return ou
 }
 
-// ClearDeletedAt clears the value of the "deleted_at" field.
-func (ou *ObjectUpdate) ClearDeletedAt() *ObjectUpdate {
-	ou.mutation.ClearDeletedAt()
-	return ou
-}
-
 // SetURL sets the "url" field.
 func (ou *ObjectUpdate) SetURL(s string) *ObjectUpdate {
 	ou.mutation.SetURL(s)
@@ -256,12 +250,6 @@ func (ou *ObjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: object.FieldDeletedAt,
 		})
 	}
-	if ou.mutation.DeletedAtCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Column: object.FieldDeletedAt,
-		})
-	}
 	if value, ok := ou.mutation.URL(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -382,12 +370,6 @@ func (ouo *ObjectUpdateOne) SetNillableDeletedAt(t *time.Time) *ObjectUpdateOne 
 	if t != nil {
 		ouo.SetDeletedAt(*t)
 	}
-	return ouo
-}
-
-// ClearDeletedAt clears the value of the "deleted_at" field.
-func (ouo *ObjectUpdateOne) ClearDeletedAt() *ObjectUpdateOne {
-	ouo.mutation.ClearDeletedAt()
 	return ouo
 }
 
@@ -577,12 +559,6 @@ func (ouo *ObjectUpdateOne) sqlSave(ctx context.Context) (_node *Object, err err
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  value,
-			Column: object.FieldDeletedAt,
-		})
-	}
-	if ouo.mutation.DeletedAtCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
 			Column: object.FieldDeletedAt,
 		})
 	}

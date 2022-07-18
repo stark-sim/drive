@@ -503,20 +503,6 @@ func DeletedAtLTE(v time.Time) predicate.Object {
 	})
 }
 
-// DeletedAtIsNil applies the IsNil predicate on the "deleted_at" field.
-func DeletedAtIsNil() predicate.Object {
-	return predicate.Object(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldDeletedAt)))
-	})
-}
-
-// DeletedAtNotNil applies the NotNil predicate on the "deleted_at" field.
-func DeletedAtNotNil() predicate.Object {
-	return predicate.Object(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldDeletedAt)))
-	})
-}
-
 // URLEQ applies the EQ predicate on the "url" field.
 func URLEQ(v string) predicate.Object {
 	return predicate.Object(func(s *sql.Selector) {

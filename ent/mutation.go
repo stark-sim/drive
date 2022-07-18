@@ -369,22 +369,9 @@ func (m *DirectoryMutation) OldDeletedAt(ctx context.Context) (v time.Time, err 
 	return oldValue.DeletedAt, nil
 }
 
-// ClearDeletedAt clears the value of the "deleted_at" field.
-func (m *DirectoryMutation) ClearDeletedAt() {
-	m.deleted_at = nil
-	m.clearedFields[directory.FieldDeletedAt] = struct{}{}
-}
-
-// DeletedAtCleared returns if the "deleted_at" field was cleared in this mutation.
-func (m *DirectoryMutation) DeletedAtCleared() bool {
-	_, ok := m.clearedFields[directory.FieldDeletedAt]
-	return ok
-}
-
 // ResetDeletedAt resets all changes to the "deleted_at" field.
 func (m *DirectoryMutation) ResetDeletedAt() {
 	m.deleted_at = nil
-	delete(m.clearedFields, directory.FieldDeletedAt)
 }
 
 // SetName sets the "name" field.
@@ -609,11 +596,7 @@ func (m *DirectoryMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *DirectoryMutation) ClearedFields() []string {
-	var fields []string
-	if m.FieldCleared(directory.FieldDeletedAt) {
-		fields = append(fields, directory.FieldDeletedAt)
-	}
-	return fields
+	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -626,11 +609,6 @@ func (m *DirectoryMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *DirectoryMutation) ClearField(name string) error {
-	switch name {
-	case directory.FieldDeletedAt:
-		m.ClearDeletedAt()
-		return nil
-	}
 	return fmt.Errorf("unknown Directory nullable field %s", name)
 }
 
@@ -1049,22 +1027,9 @@ func (m *ObjectMutation) OldDeletedAt(ctx context.Context) (v time.Time, err err
 	return oldValue.DeletedAt, nil
 }
 
-// ClearDeletedAt clears the value of the "deleted_at" field.
-func (m *ObjectMutation) ClearDeletedAt() {
-	m.deleted_at = nil
-	m.clearedFields[object.FieldDeletedAt] = struct{}{}
-}
-
-// DeletedAtCleared returns if the "deleted_at" field was cleared in this mutation.
-func (m *ObjectMutation) DeletedAtCleared() bool {
-	_, ok := m.clearedFields[object.FieldDeletedAt]
-	return ok
-}
-
 // ResetDeletedAt resets all changes to the "deleted_at" field.
 func (m *ObjectMutation) ResetDeletedAt() {
 	m.deleted_at = nil
-	delete(m.clearedFields, object.FieldDeletedAt)
 }
 
 // SetURL sets the "url" field.
@@ -1328,11 +1293,7 @@ func (m *ObjectMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *ObjectMutation) ClearedFields() []string {
-	var fields []string
-	if m.FieldCleared(object.FieldDeletedAt) {
-		fields = append(fields, object.FieldDeletedAt)
-	}
-	return fields
+	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -1345,11 +1306,6 @@ func (m *ObjectMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *ObjectMutation) ClearField(name string) error {
-	switch name {
-	case object.FieldDeletedAt:
-		m.ClearDeletedAt()
-		return nil
-	}
 	return fmt.Errorf("unknown Object nullable field %s", name)
 }
 
@@ -1799,22 +1755,9 @@ func (m *UserMutation) OldDeletedAt(ctx context.Context) (v time.Time, err error
 	return oldValue.DeletedAt, nil
 }
 
-// ClearDeletedAt clears the value of the "deleted_at" field.
-func (m *UserMutation) ClearDeletedAt() {
-	m.deleted_at = nil
-	m.clearedFields[user.FieldDeletedAt] = struct{}{}
-}
-
-// DeletedAtCleared returns if the "deleted_at" field was cleared in this mutation.
-func (m *UserMutation) DeletedAtCleared() bool {
-	_, ok := m.clearedFields[user.FieldDeletedAt]
-	return ok
-}
-
 // ResetDeletedAt resets all changes to the "deleted_at" field.
 func (m *UserMutation) ResetDeletedAt() {
 	m.deleted_at = nil
-	delete(m.clearedFields, user.FieldDeletedAt)
 }
 
 // SetName sets the "name" field.
@@ -2193,11 +2136,7 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *UserMutation) ClearedFields() []string {
-	var fields []string
-	if m.FieldCleared(user.FieldDeletedAt) {
-		fields = append(fields, user.FieldDeletedAt)
-	}
-	return fields
+	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -2210,11 +2149,6 @@ func (m *UserMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *UserMutation) ClearField(name string) error {
-	switch name {
-	case user.FieldDeletedAt:
-		m.ClearDeletedAt()
-		return nil
-	}
 	return fmt.Errorf("unknown User nullable field %s", name)
 }
 

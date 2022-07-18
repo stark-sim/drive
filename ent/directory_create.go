@@ -203,8 +203,12 @@ func (dc *DirectoryCreate) defaults() {
 		v := directory.DefaultUpdatedAt()
 		dc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := dc.mutation.DeletedAt(); !ok {
+		v := directory.DefaultDeletedAt
+		dc.mutation.SetDeletedAt(v)
+	}
 	if _, ok := dc.mutation.ID(); !ok {
-		v := directory.DefaultID
+		v := directory.DefaultID()
 		dc.mutation.SetID(v)
 	}
 }
@@ -222,6 +226,9 @@ func (dc *DirectoryCreate) check() error {
 	}
 	if _, ok := dc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Directory.updated_at"`)}
+	}
+	if _, ok := dc.mutation.DeletedAt(); !ok {
+		return &ValidationError{Name: "deleted_at", err: errors.New(`ent: missing required field "Directory.deleted_at"`)}
 	}
 	if _, ok := dc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Directory.name"`)}

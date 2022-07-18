@@ -55,7 +55,10 @@ func UserAdd(c *gin.Context) {
 		return
 	}
 
-	common.ResponseSuccess(c, &user)
+	userSerializer := common.ModelSerializer{Model: user}
+	resp := userSerializer.Serialize()
+
+	common.ResponseSuccess(c, resp)
 }
 
 func UserGet(c *gin.Context) {
@@ -77,15 +80,15 @@ func UserGet(c *gin.Context) {
 		}
 
 		serializer := common.ModelSerializer{Model: user, IsPlural: false}
-		data := serializer.Serialize()
+		resp := serializer.Serialize()
 
-		common.ResponseSuccess(c, data)
+		common.ResponseSuccess(c, resp)
 	} else {
 		users, _ := services.UserRepository.List(c, nil)
 
 		serializer := common.ModelSerializer{Model: users, IsPlural: true}
-		data := serializer.Serialize()
-		common.ResponseSuccess(c, data)
+		resp := serializer.Serialize()
+		common.ResponseSuccess(c, resp)
 	}
 
 }

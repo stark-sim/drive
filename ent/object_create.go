@@ -223,8 +223,12 @@ func (oc *ObjectCreate) defaults() {
 		v := object.DefaultUpdatedAt()
 		oc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := oc.mutation.DeletedAt(); !ok {
+		v := object.DefaultDeletedAt
+		oc.mutation.SetDeletedAt(v)
+	}
 	if _, ok := oc.mutation.ID(); !ok {
-		v := object.DefaultID
+		v := object.DefaultID()
 		oc.mutation.SetID(v)
 	}
 }
@@ -242,6 +246,9 @@ func (oc *ObjectCreate) check() error {
 	}
 	if _, ok := oc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Object.updated_at"`)}
+	}
+	if _, ok := oc.mutation.DeletedAt(); !ok {
+		return &ValidationError{Name: "deleted_at", err: errors.New(`ent: missing required field "Object.deleted_at"`)}
 	}
 	if _, ok := oc.mutation.URL(); !ok {
 		return &ValidationError{Name: "url", err: errors.New(`ent: missing required field "Object.url"`)}

@@ -5,6 +5,7 @@ import (
 	"drive/ent"
 	"drive/ent/user"
 	"drive/services/user_service"
+	"time"
 )
 
 type pgImpl struct {
@@ -18,7 +19,7 @@ func NewPgImpl(dbClient *ent.Client) user_service.Repository {
 }
 
 func (p *pgImpl) Get(ctx context.Context, id int64) (res *ent.User, err error) {
-	res, err = p.dbClient.User.Query().Where(user.DeletedAtIsNil(), user.IDEQ(id)).First(ctx)
+	res, err = p.dbClient.User.Query().Where(user.DeletedAtEQ(time.Time{}), user.IDEQ(id)).First(ctx)
 
 	if err != nil {
 		return nil, err
@@ -27,18 +28,22 @@ func (p *pgImpl) Get(ctx context.Context, id int64) (res *ent.User, err error) {
 }
 
 func (p *pgImpl) Create(ctx context.Context, name string, password string, phone string) (res *ent.User, err error) {
-	res = p.dbClient.User.Create().SetName(name).SetPassword(password).SetPhone(phone).SaveX(ctx)
-
+	res, err = p.dbClient.User.Create().SetName(name).SetPassword(password).SetPhone(phone).Save(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return res, nil
 }
 
 func (p *pgImpl) List(ctx context.Context, ids []int64) (res ent.Users, err error) {
-	query := p.dbClient.User.Query().Where(user.DeletedAtIsNil())
+	query := p.dbClient.User.Query().Where(user.DeletedAtEQ(time.Time{}))
 	if ids != nil {
 		query = query.Where(user.IDIn(ids...))
 	}
-
-	res = query.AllX(ctx)
+	res, err = query.All(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	return res, nil
 }

@@ -37,10 +37,14 @@ func init() {
 	directory.DefaultUpdatedAt = directoryDescUpdatedAt.Default.(func() time.Time)
 	// directory.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	directory.UpdateDefaultUpdatedAt = directoryDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// directoryDescDeletedAt is the schema descriptor for deleted_at field.
+	directoryDescDeletedAt := directoryMixinFields0[5].Descriptor()
+	// directory.DefaultDeletedAt holds the default value on creation for the deleted_at field.
+	directory.DefaultDeletedAt = directoryDescDeletedAt.Default.(time.Time)
 	// directoryDescID is the schema descriptor for id field.
 	directoryDescID := directoryMixinFields0[0].Descriptor()
 	// directory.DefaultID holds the default value on creation for the id field.
-	directory.DefaultID = directoryDescID.Default.(int64)
+	directory.DefaultID = directoryDescID.Default.(func() int64)
 	objectMixin := schema.Object{}.Mixin()
 	objectMixinFields0 := objectMixin[0].Fields()
 	_ = objectMixinFields0
@@ -64,10 +68,14 @@ func init() {
 	object.DefaultUpdatedAt = objectDescUpdatedAt.Default.(func() time.Time)
 	// object.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	object.UpdateDefaultUpdatedAt = objectDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// objectDescDeletedAt is the schema descriptor for deleted_at field.
+	objectDescDeletedAt := objectMixinFields0[5].Descriptor()
+	// object.DefaultDeletedAt holds the default value on creation for the deleted_at field.
+	object.DefaultDeletedAt = objectDescDeletedAt.Default.(time.Time)
 	// objectDescID is the schema descriptor for id field.
 	objectDescID := objectMixinFields0[0].Descriptor()
 	// object.DefaultID holds the default value on creation for the id field.
-	object.DefaultID = objectDescID.Default.(int64)
+	object.DefaultID = objectDescID.Default.(func() int64)
 	userMixin := schema.User{}.Mixin()
 	userMixinFields0 := userMixin[0].Fields()
 	_ = userMixinFields0
@@ -91,6 +99,10 @@ func init() {
 	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
 	// user.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	user.UpdateDefaultUpdatedAt = userDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// userDescDeletedAt is the schema descriptor for deleted_at field.
+	userDescDeletedAt := userMixinFields0[5].Descriptor()
+	// user.DefaultDeletedAt holds the default value on creation for the deleted_at field.
+	user.DefaultDeletedAt = userDescDeletedAt.Default.(time.Time)
 	// userDescName is the schema descriptor for name field.
 	userDescName := userFields[0].Descriptor()
 	// user.DefaultName holds the default value on creation for the name field.
@@ -98,5 +110,5 @@ func init() {
 	// userDescID is the schema descriptor for id field.
 	userDescID := userMixinFields0[0].Descriptor()
 	// user.DefaultID holds the default value on creation for the id field.
-	user.DefaultID = userDescID.Default.(int64)
+	user.DefaultID = userDescID.Default.(func() int64)
 }

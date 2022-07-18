@@ -19,7 +19,6 @@ func (s *ModelSerializer) Serialize() interface{} {
 
 	if s.IsPlural {
 		var resList []map[string]interface{}
-		var res map[string]interface{}
 
 		var models []interface{}
 
@@ -33,17 +32,17 @@ func (s *ModelSerializer) Serialize() interface{} {
 		}
 
 		for _, model := range models {
-
+			var tempRes map[string]interface{}
 			_json, _ := json.Marshal(model)
-			_ = json.Unmarshal(_json, &res)
+			_ = json.Unmarshal(_json, &tempRes)
 
-			for k, v := range res {
+			for k, v := range tempRes {
 				if k == "id" || k == "created_by" || k == "updated_by" {
-					res[k] = strconv.FormatInt(v.(int64), 10)
+					tempRes[k] = strconv.FormatInt(v.(int64), 10)
 				}
 			}
 
-			resList = append(resList, res)
+			resList = append(resList, tempRes)
 		}
 		return resList
 
