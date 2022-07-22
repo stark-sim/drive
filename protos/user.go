@@ -9,3 +9,8 @@ type UserAddReq struct {
 type UserGetReq struct {
 	Id int64 `form:"id"`
 }
+
+type UserLoginReq struct {
+	Phone    string `form:"phone" json:"phone"`
+	Password string `form:"password" json:"password"`
+}

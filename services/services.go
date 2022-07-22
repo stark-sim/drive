@@ -8,8 +8,10 @@ import (
 
 var (
 	UserRepository user_service.Repository
+	UserService    user_service.UserService
 )
 
 func Init() {
 	UserRepository = impl.NewPgImpl(db.NewDBClient())
+	UserService = impl.NewUserService(UserRepository)
 }

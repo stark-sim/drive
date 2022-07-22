@@ -61,6 +61,26 @@ func UserAdd(c *gin.Context) {
 	common.ResponseSuccess(c, resp)
 }
 
+/*
+	Login 登录获取 JWT
+*/
+func Login(c *gin.Context) {
+	var req protos.UserLoginReq
+	err := c.ShouldBindQuery(&req)
+	if err != nil {
+		common.ResponseErrorWithMsg(c, common.CodeInvalidParams, err.Error())
+		return
+	}
+
+	token, err := services.UserService.Login(c, req.Phone, req.Password)
+	if err != nil {
+		common.ResponseErrorWithMsg(c, common.CodeGrpcError, err.Error())
+		return
+	}
+
+	common.ResponseSuccess(c, token)
+}
+
 func UserGet(c *gin.Context) {
 
 	var req protos.UserGetReq

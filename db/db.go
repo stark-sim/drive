@@ -7,6 +7,7 @@ import (
 	"drive/ent"
 	"drive/ent/migrate"
 	"entgo.io/ent/dialect/sql/schema"
+	"errors"
 	"fmt"
 	golangMigrate "github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -57,7 +58,7 @@ func migrateWithMigrationFiles() {
 	if err != nil {
 		logrus.Errorf("failed at new migrate, err: %v", err)
 	}
-	if err = m.Up(); err != nil {
+	if err = m.Up(); err != nil && !errors.Is(err, golangMigrate.ErrNoChange) {
 		logrus.Errorf("failed at up migrate: %v", err)
 	}
 }
