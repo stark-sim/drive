@@ -18,12 +18,12 @@ func Init() *gin.Engine {
 
 	v1.Use(middleware.AuthMiddleware())
 
-	usersR := r.Group("/users")
+	usersR := v1.Group("/users")
 
 	usersR.GET("", controllers.UserGet)
 	usersR.DELETE("", controllers.UserDelete)
 
-	directoriesR := r.Group("/directories")
+	directoriesR := v1.Group("/directories")
 
 	directoriesR.GET("", controllers.DirectoryGet)
 	directoriesR.POST("", controllers.DirectoryCreate)
