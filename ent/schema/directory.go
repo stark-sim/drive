@@ -14,6 +14,8 @@ type Directory struct {
 func (Directory) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name"),
+		field.Bool("is_public").Default(true),
+		field.Int64("parent_id").Default(0),
 	}
 }
 

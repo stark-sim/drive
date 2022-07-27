@@ -96,6 +96,34 @@ func (dc *DirectoryCreate) SetName(s string) *DirectoryCreate {
 	return dc
 }
 
+// SetIsPublic sets the "is_public" field.
+func (dc *DirectoryCreate) SetIsPublic(b bool) *DirectoryCreate {
+	dc.mutation.SetIsPublic(b)
+	return dc
+}
+
+// SetNillableIsPublic sets the "is_public" field if the given value is not nil.
+func (dc *DirectoryCreate) SetNillableIsPublic(b *bool) *DirectoryCreate {
+	if b != nil {
+		dc.SetIsPublic(*b)
+	}
+	return dc
+}
+
+// SetParentID sets the "parent_id" field.
+func (dc *DirectoryCreate) SetParentID(i int64) *DirectoryCreate {
+	dc.mutation.SetParentID(i)
+	return dc
+}
+
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (dc *DirectoryCreate) SetNillableParentID(i *int64) *DirectoryCreate {
+	if i != nil {
+		dc.SetParentID(*i)
+	}
+	return dc
+}
+
 // SetID sets the "id" field.
 func (dc *DirectoryCreate) SetID(i int64) *DirectoryCreate {
 	dc.mutation.SetID(i)
@@ -207,6 +235,14 @@ func (dc *DirectoryCreate) defaults() {
 		v := directory.DefaultDeletedAt
 		dc.mutation.SetDeletedAt(v)
 	}
+	if _, ok := dc.mutation.IsPublic(); !ok {
+		v := directory.DefaultIsPublic
+		dc.mutation.SetIsPublic(v)
+	}
+	if _, ok := dc.mutation.ParentID(); !ok {
+		v := directory.DefaultParentID
+		dc.mutation.SetParentID(v)
+	}
 	if _, ok := dc.mutation.ID(); !ok {
 		v := directory.DefaultID()
 		dc.mutation.SetID(v)
@@ -232,6 +268,12 @@ func (dc *DirectoryCreate) check() error {
 	}
 	if _, ok := dc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Directory.name"`)}
+	}
+	if _, ok := dc.mutation.IsPublic(); !ok {
+		return &ValidationError{Name: "is_public", err: errors.New(`ent: missing required field "Directory.is_public"`)}
+	}
+	if _, ok := dc.mutation.ParentID(); !ok {
+		return &ValidationError{Name: "parent_id", err: errors.New(`ent: missing required field "Directory.parent_id"`)}
 	}
 	return nil
 }
@@ -313,6 +355,22 @@ func (dc *DirectoryCreate) createSpec() (*Directory, *sqlgraph.CreateSpec) {
 			Column: directory.FieldName,
 		})
 		_node.Name = value
+	}
+	if value, ok := dc.mutation.IsPublic(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: directory.FieldIsPublic,
+		})
+		_node.IsPublic = value
+	}
+	if value, ok := dc.mutation.ParentID(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: directory.FieldParentID,
+		})
+		_node.ParentID = value
 	}
 	return _node, _spec
 }

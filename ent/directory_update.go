@@ -96,6 +96,41 @@ func (du *DirectoryUpdate) SetName(s string) *DirectoryUpdate {
 	return du
 }
 
+// SetIsPublic sets the "is_public" field.
+func (du *DirectoryUpdate) SetIsPublic(b bool) *DirectoryUpdate {
+	du.mutation.SetIsPublic(b)
+	return du
+}
+
+// SetNillableIsPublic sets the "is_public" field if the given value is not nil.
+func (du *DirectoryUpdate) SetNillableIsPublic(b *bool) *DirectoryUpdate {
+	if b != nil {
+		du.SetIsPublic(*b)
+	}
+	return du
+}
+
+// SetParentID sets the "parent_id" field.
+func (du *DirectoryUpdate) SetParentID(i int64) *DirectoryUpdate {
+	du.mutation.ResetParentID()
+	du.mutation.SetParentID(i)
+	return du
+}
+
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (du *DirectoryUpdate) SetNillableParentID(i *int64) *DirectoryUpdate {
+	if i != nil {
+		du.SetParentID(*i)
+	}
+	return du
+}
+
+// AddParentID adds i to the "parent_id" field.
+func (du *DirectoryUpdate) AddParentID(i int64) *DirectoryUpdate {
+	du.mutation.AddParentID(i)
+	return du
+}
+
 // Mutation returns the DirectoryMutation object of the builder.
 func (du *DirectoryUpdate) Mutation() *DirectoryMutation {
 	return du.mutation
@@ -231,6 +266,27 @@ func (du *DirectoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: directory.FieldName,
 		})
 	}
+	if value, ok := du.mutation.IsPublic(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: directory.FieldIsPublic,
+		})
+	}
+	if value, ok := du.mutation.ParentID(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: directory.FieldParentID,
+		})
+	}
+	if value, ok := du.mutation.AddedParentID(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: directory.FieldParentID,
+		})
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, du.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{directory.Label}
@@ -315,6 +371,41 @@ func (duo *DirectoryUpdateOne) SetNillableDeletedAt(t *time.Time) *DirectoryUpda
 // SetName sets the "name" field.
 func (duo *DirectoryUpdateOne) SetName(s string) *DirectoryUpdateOne {
 	duo.mutation.SetName(s)
+	return duo
+}
+
+// SetIsPublic sets the "is_public" field.
+func (duo *DirectoryUpdateOne) SetIsPublic(b bool) *DirectoryUpdateOne {
+	duo.mutation.SetIsPublic(b)
+	return duo
+}
+
+// SetNillableIsPublic sets the "is_public" field if the given value is not nil.
+func (duo *DirectoryUpdateOne) SetNillableIsPublic(b *bool) *DirectoryUpdateOne {
+	if b != nil {
+		duo.SetIsPublic(*b)
+	}
+	return duo
+}
+
+// SetParentID sets the "parent_id" field.
+func (duo *DirectoryUpdateOne) SetParentID(i int64) *DirectoryUpdateOne {
+	duo.mutation.ResetParentID()
+	duo.mutation.SetParentID(i)
+	return duo
+}
+
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (duo *DirectoryUpdateOne) SetNillableParentID(i *int64) *DirectoryUpdateOne {
+	if i != nil {
+		duo.SetParentID(*i)
+	}
+	return duo
+}
+
+// AddParentID adds i to the "parent_id" field.
+func (duo *DirectoryUpdateOne) AddParentID(i int64) *DirectoryUpdateOne {
+	duo.mutation.AddParentID(i)
 	return duo
 }
 
@@ -481,6 +572,27 @@ func (duo *DirectoryUpdateOne) sqlSave(ctx context.Context) (_node *Directory, e
 			Type:   field.TypeString,
 			Value:  value,
 			Column: directory.FieldName,
+		})
+	}
+	if value, ok := duo.mutation.IsPublic(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: directory.FieldIsPublic,
+		})
+	}
+	if value, ok := duo.mutation.ParentID(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: directory.FieldParentID,
+		})
+	}
+	if value, ok := duo.mutation.AddedParentID(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: directory.FieldParentID,
 		})
 	}
 	_node = &Directory{config: duo.config}

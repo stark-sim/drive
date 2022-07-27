@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"drive/common"
+	"drive/config"
 	"drive/controllers/protos"
 	"drive/services"
 	"fmt"
@@ -63,33 +64,10 @@ func UserAdd(c *gin.Context) {
 	}
 	logrus.Debugf("req: %+v", req)
 
-	// 获取 token
-	//token, err := auth.GetToken(c)
-	//if err != nil {
-	//	common.ResponseErrorWithMsg(c, common.CodeInvalidToken, err.Error())
-	//	return
-	//}
-
-	// 判断是否已经注册
-	//user, err := service.ExplorerUserRepository.Get(registerResponse.UserId)
-	//if err != nil {
-	//	logrus.Errorf("query user failed, err: %s", err.Error())
-	//	common.ResponseError(c, common.CodeServerDBError)
-	//	return
-	//}
-
-	//if user.UserId == 0 {
-	//	// 未注册，添加用户
-	//	if err = service.ExplorerUserRepository.Create(nil, &models.ExplorerUser{
-	//		UserId: registerResponse.UserId,
-	//		Status: req.Status,
-	//		Role:   req.Role,
-	//	}); err != nil {
-	//		logrus.Errorf("create user failed, err: %s", err.Error())
-	//		common.ResponseError(c, common.CodeServerDBError)
-	//		return
-	//	}
-	//}
+	if config.Conf.Code.Invite != req.InviteCode {
+		common.ResponseErrorWithMsg(c, common.CodeInvalidParams, "创建用户需要邀请码")
+		return
+	}
 
 	user, err := services.UserRepository.Create(c, req.Name, req.Password, req.Phone)
 	if err != nil {

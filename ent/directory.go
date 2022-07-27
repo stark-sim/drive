@@ -28,6 +28,10 @@ type Directory struct {
 	DeletedAt time.Time `json:"deleted_at,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// IsPublic holds the value of the "is_public" field.
+	IsPublic bool `json:"is_public,omitempty"`
+	// ParentID holds the value of the "parent_id" field.
+	ParentID int64 `json:"parent_id,omitempty"`
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -35,7 +39,9 @@ func (*Directory) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case directory.FieldID, directory.FieldCreatedBy, directory.FieldUpdatedBy:
+		case directory.FieldIsPublic:
+			values[i] = new(sql.NullBool)
+		case directory.FieldID, directory.FieldCreatedBy, directory.FieldUpdatedBy, directory.FieldParentID:
 			values[i] = new(sql.NullInt64)
 		case directory.FieldName:
 			values[i] = new(sql.NullString)
@@ -98,6 +104,18 @@ func (d *Directory) assignValues(columns []string, values []interface{}) error {
 			} else if value.Valid {
 				d.Name = value.String
 			}
+		case directory.FieldIsPublic:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_public", values[i])
+			} else if value.Valid {
+				d.IsPublic = value.Bool
+			}
+		case directory.FieldParentID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field parent_id", values[i])
+			} else if value.Valid {
+				d.ParentID = value.Int64
+			}
 		}
 	}
 	return nil
@@ -143,6 +161,12 @@ func (d *Directory) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(d.Name)
+	builder.WriteString(", ")
+	builder.WriteString("is_public=")
+	builder.WriteString(fmt.Sprintf("%v", d.IsPublic))
+	builder.WriteString(", ")
+	builder.WriteString("parent_id=")
+	builder.WriteString(fmt.Sprintf("%v", d.ParentID))
 	builder.WriteByte(')')
 	return builder.String()
 }

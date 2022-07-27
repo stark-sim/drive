@@ -23,6 +23,10 @@ const (
 	FieldDeletedAt = "deleted_at"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldIsPublic holds the string denoting the is_public field in the database.
+	FieldIsPublic = "is_public"
+	// FieldParentID holds the string denoting the parent_id field in the database.
+	FieldParentID = "parent_id"
 	// Table holds the table name of the directory in the database.
 	Table = "directories"
 )
@@ -36,6 +40,8 @@ var Columns = []string{
 	FieldUpdatedAt,
 	FieldDeletedAt,
 	FieldName,
+	FieldIsPublic,
+	FieldParentID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -61,6 +67,10 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// DefaultDeletedAt holds the default value on creation for the "deleted_at" field.
 	DefaultDeletedAt time.Time
+	// DefaultIsPublic holds the default value on creation for the "is_public" field.
+	DefaultIsPublic bool
+	// DefaultParentID holds the default value on creation for the "parent_id" field.
+	DefaultParentID int64
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() int64
 )

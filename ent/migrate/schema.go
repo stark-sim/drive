@@ -17,6 +17,8 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "deleted_at", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString},
+		{Name: "is_public", Type: field.TypeBool, Default: true},
+		{Name: "parent_id", Type: field.TypeInt64, Default: 0},
 	}
 	// DirectoriesTable holds the schema information for the "directories" table.
 	DirectoriesTable = &schema.Table{

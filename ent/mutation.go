@@ -44,6 +44,9 @@ type DirectoryMutation struct {
 	updated_at    *time.Time
 	deleted_at    *time.Time
 	name          *string
+	is_public     *bool
+	parent_id     *int64
+	addparent_id  *int64
 	clearedFields map[string]struct{}
 	done          bool
 	oldValue      func(context.Context) (*Directory, error)
@@ -410,6 +413,98 @@ func (m *DirectoryMutation) ResetName() {
 	m.name = nil
 }
 
+// SetIsPublic sets the "is_public" field.
+func (m *DirectoryMutation) SetIsPublic(b bool) {
+	m.is_public = &b
+}
+
+// IsPublic returns the value of the "is_public" field in the mutation.
+func (m *DirectoryMutation) IsPublic() (r bool, exists bool) {
+	v := m.is_public
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsPublic returns the old "is_public" field's value of the Directory entity.
+// If the Directory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DirectoryMutation) OldIsPublic(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsPublic is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsPublic requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsPublic: %w", err)
+	}
+	return oldValue.IsPublic, nil
+}
+
+// ResetIsPublic resets all changes to the "is_public" field.
+func (m *DirectoryMutation) ResetIsPublic() {
+	m.is_public = nil
+}
+
+// SetParentID sets the "parent_id" field.
+func (m *DirectoryMutation) SetParentID(i int64) {
+	m.parent_id = &i
+	m.addparent_id = nil
+}
+
+// ParentID returns the value of the "parent_id" field in the mutation.
+func (m *DirectoryMutation) ParentID() (r int64, exists bool) {
+	v := m.parent_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldParentID returns the old "parent_id" field's value of the Directory entity.
+// If the Directory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DirectoryMutation) OldParentID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldParentID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldParentID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldParentID: %w", err)
+	}
+	return oldValue.ParentID, nil
+}
+
+// AddParentID adds i to the "parent_id" field.
+func (m *DirectoryMutation) AddParentID(i int64) {
+	if m.addparent_id != nil {
+		*m.addparent_id += i
+	} else {
+		m.addparent_id = &i
+	}
+}
+
+// AddedParentID returns the value that was added to the "parent_id" field in this mutation.
+func (m *DirectoryMutation) AddedParentID() (r int64, exists bool) {
+	v := m.addparent_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetParentID resets all changes to the "parent_id" field.
+func (m *DirectoryMutation) ResetParentID() {
+	m.parent_id = nil
+	m.addparent_id = nil
+}
+
 // Where appends a list predicates to the DirectoryMutation builder.
 func (m *DirectoryMutation) Where(ps ...predicate.Directory) {
 	m.predicates = append(m.predicates, ps...)
@@ -429,7 +524,7 @@ func (m *DirectoryMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DirectoryMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 8)
 	if m.created_by != nil {
 		fields = append(fields, directory.FieldCreatedBy)
 	}
@@ -447,6 +542,12 @@ func (m *DirectoryMutation) Fields() []string {
 	}
 	if m.name != nil {
 		fields = append(fields, directory.FieldName)
+	}
+	if m.is_public != nil {
+		fields = append(fields, directory.FieldIsPublic)
+	}
+	if m.parent_id != nil {
+		fields = append(fields, directory.FieldParentID)
 	}
 	return fields
 }
@@ -468,6 +569,10 @@ func (m *DirectoryMutation) Field(name string) (ent.Value, bool) {
 		return m.DeletedAt()
 	case directory.FieldName:
 		return m.Name()
+	case directory.FieldIsPublic:
+		return m.IsPublic()
+	case directory.FieldParentID:
+		return m.ParentID()
 	}
 	return nil, false
 }
@@ -489,6 +594,10 @@ func (m *DirectoryMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldDeletedAt(ctx)
 	case directory.FieldName:
 		return m.OldName(ctx)
+	case directory.FieldIsPublic:
+		return m.OldIsPublic(ctx)
+	case directory.FieldParentID:
+		return m.OldParentID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Directory field %s", name)
 }
@@ -540,6 +649,20 @@ func (m *DirectoryMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetName(v)
 		return nil
+	case directory.FieldIsPublic:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsPublic(v)
+		return nil
+	case directory.FieldParentID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetParentID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Directory field %s", name)
 }
@@ -554,6 +677,9 @@ func (m *DirectoryMutation) AddedFields() []string {
 	if m.addupdated_by != nil {
 		fields = append(fields, directory.FieldUpdatedBy)
 	}
+	if m.addparent_id != nil {
+		fields = append(fields, directory.FieldParentID)
+	}
 	return fields
 }
 
@@ -566,6 +692,8 @@ func (m *DirectoryMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedCreatedBy()
 	case directory.FieldUpdatedBy:
 		return m.AddedUpdatedBy()
+	case directory.FieldParentID:
+		return m.AddedParentID()
 	}
 	return nil, false
 }
@@ -588,6 +716,13 @@ func (m *DirectoryMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddUpdatedBy(v)
+		return nil
+	case directory.FieldParentID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddParentID(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Directory numeric field %s", name)
@@ -633,6 +768,12 @@ func (m *DirectoryMutation) ResetField(name string) error {
 		return nil
 	case directory.FieldName:
 		m.ResetName()
+		return nil
+	case directory.FieldIsPublic:
+		m.ResetIsPublic()
+		return nil
+	case directory.FieldParentID:
+		m.ResetParentID()
 		return nil
 	}
 	return fmt.Errorf("unknown Directory field %s", name)
