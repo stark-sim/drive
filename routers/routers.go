@@ -19,6 +19,7 @@ func Init() *gin.Engine {
 	v1.Use(middleware.AuthMiddleware())
 
 	v1.GET("/users", controllers.UserGet)
+	v1.DELETE("/users", controllers.UserDelete)
 
 	return r
 }

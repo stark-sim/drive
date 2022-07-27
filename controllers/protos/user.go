@@ -10,6 +10,10 @@ type UserGetReq struct {
 	Id int64 `form:"id"`
 }
 
+type UserDeleteReq struct {
+	Id string `form:"id" json:"id" binding:"required"`
+}
+
 type UserLoginReq struct {
 	Phone    string `form:"phone" json:"phone"`
 	Password string `form:"password" json:"password"`

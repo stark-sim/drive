@@ -158,3 +158,20 @@ func UserGet(c *gin.Context) {
 	}
 
 }
+
+func UserDelete(c *gin.Context) {
+	var req protos.UserDeleteReq
+	err := c.ShouldBind(&req)
+	if err != nil {
+		common.ResponseErrorWithMsg(c, common.CodeInvalidParams, err.Error())
+		return
+	}
+	user, err := services.UserRepository.DeleteOne(c, common.StringToInt64(req.Id))
+	if err != nil {
+		common.ResponseErrorWithMsg(c, common.CodeServerError, err.Error())
+		return
+	}
+	serializer := common.ModelSerializer{Model: user, IsPlural: false}
+	resp := serializer.Serialize()
+	common.ResponseSuccess(c, resp)
+}

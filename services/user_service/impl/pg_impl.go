@@ -7,6 +7,7 @@ import (
 	"drive/ent/user"
 	"drive/services/user_service"
 	"github.com/sirupsen/logrus"
+	"time"
 )
 
 type pgImpl struct {
@@ -49,11 +50,20 @@ func (p *pgImpl) List(ctx context.Context, ids []int64) (res ent.Users, err erro
 	return res, nil
 }
 
+func (p *pgImpl) DeleteOne(ctx context.Context, id int64) (res *ent.User, err error) {
+	_user, err := p.dbClient.User.UpdateOneID(id).SetDeletedAt(time.Now()).Save(ctx)
+	if err != nil {
+		logrus.Errorf("soft delete user by id error: %v", err)
+		return nil, err
+	}
+	return _user, nil
+}
+
 func (p *pgImpl) GetByPhone(ctx context.Context, phone string) (res *ent.User, err error) {
-	user, err := p.dbClient.User.Query().Where(user.PhoneEQ(phone)).First(ctx)
+	_user, err := p.dbClient.User.Query().Where(user.PhoneEQ(phone)).First(ctx)
 	if err != nil {
 		logrus.Errorf("get user by phone error: %v", err)
 		return nil, err
 	}
-	return user, nil
+	return _user, nil
 }
