@@ -14,6 +14,7 @@ type Object struct {
 // Fields of the Object.
 func (Object) Fields() []ent.Field {
 	return []ent.Field{
+		field.String("name").NotEmpty(),
 		field.String("url"),
 		field.Bool("is_public").Default(true).StructTag(`json:"is_public"`),
 	}

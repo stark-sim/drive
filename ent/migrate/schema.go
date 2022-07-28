@@ -42,6 +42,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "deleted_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString},
 		{Name: "url", Type: field.TypeString},
 		{Name: "is_public", Type: field.TypeBool, Default: true},
 		{Name: "directory_objects", Type: field.TypeInt64, Nullable: true},
@@ -55,13 +56,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "objects_directories_objects",
-				Columns:    []*schema.Column{ObjectsColumns[8]},
+				Columns:    []*schema.Column{ObjectsColumns[9]},
 				RefColumns: []*schema.Column{DirectoriesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "objects_users_objects",
-				Columns:    []*schema.Column{ObjectsColumns[9]},
+				Columns:    []*schema.Column{ObjectsColumns[10]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

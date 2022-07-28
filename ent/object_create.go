@@ -92,6 +92,12 @@ func (oc *ObjectCreate) SetNillableDeletedAt(t *time.Time) *ObjectCreate {
 	return oc
 }
 
+// SetName sets the "name" field.
+func (oc *ObjectCreate) SetName(s string) *ObjectCreate {
+	oc.mutation.SetName(s)
+	return oc
+}
+
 // SetURL sets the "url" field.
 func (oc *ObjectCreate) SetURL(s string) *ObjectCreate {
 	oc.mutation.SetURL(s)
@@ -288,6 +294,14 @@ func (oc *ObjectCreate) check() error {
 	if _, ok := oc.mutation.DeletedAt(); !ok {
 		return &ValidationError{Name: "deleted_at", err: errors.New(`ent: missing required field "Object.deleted_at"`)}
 	}
+	if _, ok := oc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Object.name"`)}
+	}
+	if v, ok := oc.mutation.Name(); ok {
+		if err := object.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Object.name": %w`, err)}
+		}
+	}
 	if _, ok := oc.mutation.URL(); !ok {
 		return &ValidationError{Name: "url", err: errors.New(`ent: missing required field "Object.url"`)}
 	}
@@ -366,6 +380,14 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 			Column: object.FieldDeletedAt,
 		})
 		_node.DeletedAt = value
+	}
+	if value, ok := oc.mutation.Name(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: object.FieldName,
+		})
+		_node.Name = value
 	}
 	if value, ok := oc.mutation.URL(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{

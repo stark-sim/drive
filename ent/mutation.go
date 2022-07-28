@@ -1050,6 +1050,7 @@ type ObjectMutation struct {
 	created_at       *time.Time
 	updated_at       *time.Time
 	deleted_at       *time.Time
+	name             *string
 	url              *string
 	is_public        *bool
 	clearedFields    map[string]struct{}
@@ -1386,6 +1387,42 @@ func (m *ObjectMutation) ResetDeletedAt() {
 	m.deleted_at = nil
 }
 
+// SetName sets the "name" field.
+func (m *ObjectMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *ObjectMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Object entity.
+// If the Object object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ObjectMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *ObjectMutation) ResetName() {
+	m.name = nil
+}
+
 // SetURL sets the "url" field.
 func (m *ObjectMutation) SetURL(s string) {
 	m.url = &s
@@ -1555,7 +1592,7 @@ func (m *ObjectMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ObjectMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.created_by != nil {
 		fields = append(fields, object.FieldCreatedBy)
 	}
@@ -1570,6 +1607,9 @@ func (m *ObjectMutation) Fields() []string {
 	}
 	if m.deleted_at != nil {
 		fields = append(fields, object.FieldDeletedAt)
+	}
+	if m.name != nil {
+		fields = append(fields, object.FieldName)
 	}
 	if m.url != nil {
 		fields = append(fields, object.FieldURL)
@@ -1595,6 +1635,8 @@ func (m *ObjectMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdatedAt()
 	case object.FieldDeletedAt:
 		return m.DeletedAt()
+	case object.FieldName:
+		return m.Name()
 	case object.FieldURL:
 		return m.URL()
 	case object.FieldIsPublic:
@@ -1618,6 +1660,8 @@ func (m *ObjectMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldUpdatedAt(ctx)
 	case object.FieldDeletedAt:
 		return m.OldDeletedAt(ctx)
+	case object.FieldName:
+		return m.OldName(ctx)
 	case object.FieldURL:
 		return m.OldURL(ctx)
 	case object.FieldIsPublic:
@@ -1665,6 +1709,13 @@ func (m *ObjectMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDeletedAt(v)
+		return nil
+	case object.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
 		return nil
 	case object.FieldURL:
 		v, ok := value.(string)
@@ -1770,6 +1821,9 @@ func (m *ObjectMutation) ResetField(name string) error {
 		return nil
 	case object.FieldDeletedAt:
 		m.ResetDeletedAt()
+		return nil
+	case object.FieldName:
+		m.ResetName()
 		return nil
 	case object.FieldURL:
 		m.ResetURL()

@@ -15,6 +15,8 @@ type Config struct {
 	Code `mapstructure:"code"`
 
 	APIConfig `mapstructure:"api"`
+
+	MinioConfig `mapstructure:"minio"`
 }
 
 type Code struct {
@@ -32,6 +34,12 @@ type DBConfig struct {
 	Username string
 	Password string
 	Database string
+}
+
+type MinioConfig struct {
+	Endpoint  string
+	AccessKey string
+	SecretKey string
 }
 
 func Init() error {

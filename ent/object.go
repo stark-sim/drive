@@ -28,6 +28,8 @@ type Object struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// DeletedAt holds the value of the "deleted_at" field.
 	DeletedAt time.Time `json:"deleted_at,omitempty"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name,omitempty"`
 	// URL holds the value of the "url" field.
 	URL string `json:"url,omitempty"`
 	// IsPublic holds the value of the "is_public" field.
@@ -87,7 +89,7 @@ func (*Object) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullBool)
 		case object.FieldID, object.FieldCreatedBy, object.FieldUpdatedBy:
 			values[i] = new(sql.NullInt64)
-		case object.FieldURL:
+		case object.FieldName, object.FieldURL:
 			values[i] = new(sql.NullString)
 		case object.FieldCreatedAt, object.FieldUpdatedAt, object.FieldDeletedAt:
 			values[i] = new(sql.NullTime)
@@ -145,6 +147,12 @@ func (o *Object) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
 			} else if value.Valid {
 				o.DeletedAt = value.Time
+			}
+		case object.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				o.Name = value.String
 			}
 		case object.FieldURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -224,6 +232,9 @@ func (o *Object) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("deleted_at=")
 	builder.WriteString(o.DeletedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("name=")
+	builder.WriteString(o.Name)
 	builder.WriteString(", ")
 	builder.WriteString("url=")
 	builder.WriteString(o.URL)

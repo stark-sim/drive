@@ -92,6 +92,12 @@ func (ou *ObjectUpdate) SetNillableDeletedAt(t *time.Time) *ObjectUpdate {
 	return ou
 }
 
+// SetName sets the "name" field.
+func (ou *ObjectUpdate) SetName(s string) *ObjectUpdate {
+	ou.mutation.SetName(s)
+	return ou
+}
+
 // SetURL sets the "url" field.
 func (ou *ObjectUpdate) SetURL(s string) *ObjectUpdate {
 	ou.mutation.SetURL(s)
@@ -175,12 +181,18 @@ func (ou *ObjectUpdate) Save(ctx context.Context) (int, error) {
 	)
 	ou.defaults()
 	if len(ou.hooks) == 0 {
+		if err = ou.check(); err != nil {
+			return 0, err
+		}
 		affected, err = ou.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*ObjectMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = ou.check(); err != nil {
+				return 0, err
 			}
 			ou.mutation = mutation
 			affected, err = ou.sqlSave(ctx)
@@ -228,6 +240,16 @@ func (ou *ObjectUpdate) defaults() {
 		v := object.UpdateDefaultUpdatedAt()
 		ou.mutation.SetUpdatedAt(v)
 	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (ou *ObjectUpdate) check() error {
+	if v, ok := ou.mutation.Name(); ok {
+		if err := object.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Object.name": %w`, err)}
+		}
+	}
+	return nil
 }
 
 func (ou *ObjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
@@ -288,6 +310,13 @@ func (ou *ObjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeTime,
 			Value:  value,
 			Column: object.FieldDeletedAt,
+		})
+	}
+	if value, ok := ou.mutation.Name(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: object.FieldName,
 		})
 	}
 	if value, ok := ou.mutation.URL(); ok {
@@ -455,6 +484,12 @@ func (ouo *ObjectUpdateOne) SetNillableDeletedAt(t *time.Time) *ObjectUpdateOne 
 	return ouo
 }
 
+// SetName sets the "name" field.
+func (ouo *ObjectUpdateOne) SetName(s string) *ObjectUpdateOne {
+	ouo.mutation.SetName(s)
+	return ouo
+}
+
 // SetURL sets the "url" field.
 func (ouo *ObjectUpdateOne) SetURL(s string) *ObjectUpdateOne {
 	ouo.mutation.SetURL(s)
@@ -545,12 +580,18 @@ func (ouo *ObjectUpdateOne) Save(ctx context.Context) (*Object, error) {
 	)
 	ouo.defaults()
 	if len(ouo.hooks) == 0 {
+		if err = ouo.check(); err != nil {
+			return nil, err
+		}
 		node, err = ouo.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*ObjectMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = ouo.check(); err != nil {
+				return nil, err
 			}
 			ouo.mutation = mutation
 			node, err = ouo.sqlSave(ctx)
@@ -604,6 +645,16 @@ func (ouo *ObjectUpdateOne) defaults() {
 		v := object.UpdateDefaultUpdatedAt()
 		ouo.mutation.SetUpdatedAt(v)
 	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (ouo *ObjectUpdateOne) check() error {
+	if v, ok := ouo.mutation.Name(); ok {
+		if err := object.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Object.name": %w`, err)}
+		}
+	}
+	return nil
 }
 
 func (ouo *ObjectUpdateOne) sqlSave(ctx context.Context) (_node *Object, err error) {
@@ -681,6 +732,13 @@ func (ouo *ObjectUpdateOne) sqlSave(ctx context.Context) (_node *Object, err err
 			Type:   field.TypeTime,
 			Value:  value,
 			Column: object.FieldDeletedAt,
+		})
+	}
+	if value, ok := ouo.mutation.Name(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: object.FieldName,
 		})
 	}
 	if value, ok := ouo.mutation.URL(); ok {

@@ -76,8 +76,12 @@ func init() {
 	objectDescDeletedAt := objectMixinFields0[5].Descriptor()
 	// object.DefaultDeletedAt holds the default value on creation for the deleted_at field.
 	object.DefaultDeletedAt = objectDescDeletedAt.Default.(time.Time)
+	// objectDescName is the schema descriptor for name field.
+	objectDescName := objectFields[0].Descriptor()
+	// object.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	object.NameValidator = objectDescName.Validators[0].(func(string) error)
 	// objectDescIsPublic is the schema descriptor for is_public field.
-	objectDescIsPublic := objectFields[1].Descriptor()
+	objectDescIsPublic := objectFields[2].Descriptor()
 	// object.DefaultIsPublic holds the default value on creation for the is_public field.
 	object.DefaultIsPublic = objectDescIsPublic.Default.(bool)
 	// objectDescID is the schema descriptor for id field.
