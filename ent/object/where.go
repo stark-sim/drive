@@ -123,6 +123,13 @@ func URL(v string) predicate.Object {
 	})
 }
 
+// IsPublic applies equality check predicate on the "is_public" field. It's identical to IsPublicEQ.
+func IsPublic(v bool) predicate.Object {
+	return predicate.Object(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldIsPublic), v))
+	})
+}
+
 // CreatedByEQ applies the EQ predicate on the "created_by" field.
 func CreatedByEQ(v int64) predicate.Object {
 	return predicate.Object(func(s *sql.Selector) {
@@ -614,6 +621,20 @@ func URLContainsFold(v string) predicate.Object {
 	})
 }
 
+// IsPublicEQ applies the EQ predicate on the "is_public" field.
+func IsPublicEQ(v bool) predicate.Object {
+	return predicate.Object(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldIsPublic), v))
+	})
+}
+
+// IsPublicNEQ applies the NEQ predicate on the "is_public" field.
+func IsPublicNEQ(v bool) predicate.Object {
+	return predicate.Object(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldIsPublic), v))
+	})
+}
+
 // HasUser applies the HasEdge predicate on the "user" edge.
 func HasUser() predicate.Object {
 	return predicate.Object(func(s *sql.Selector) {
@@ -633,6 +654,34 @@ func HasUserWith(preds ...predicate.User) predicate.Object {
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(UserInverseTable, FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasDirectory applies the HasEdge predicate on the "directory" edge.
+func HasDirectory() predicate.Object {
+	return predicate.Object(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(DirectoryTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, DirectoryTable, DirectoryColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasDirectoryWith applies the HasEdge predicate on the "directory" edge with a given conditions (other predicates).
+func HasDirectoryWith(preds ...predicate.Directory) predicate.Object {
+	return predicate.Object(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(DirectoryInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, DirectoryTable, DirectoryColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

@@ -27,8 +27,29 @@ const (
 	FieldIsPublic = "is_public"
 	// FieldParentID holds the string denoting the parent_id field in the database.
 	FieldParentID = "parent_id"
+	// EdgeObjects holds the string denoting the objects edge name in mutations.
+	EdgeObjects = "objects"
+	// EdgeParent holds the string denoting the parent edge name in mutations.
+	EdgeParent = "parent"
+	// EdgeChildren holds the string denoting the children edge name in mutations.
+	EdgeChildren = "children"
 	// Table holds the table name of the directory in the database.
 	Table = "directories"
+	// ObjectsTable is the table that holds the objects relation/edge.
+	ObjectsTable = "objects"
+	// ObjectsInverseTable is the table name for the Object entity.
+	// It exists in this package in order to avoid circular dependency with the "object" package.
+	ObjectsInverseTable = "objects"
+	// ObjectsColumn is the table column denoting the objects relation/edge.
+	ObjectsColumn = "directory_objects"
+	// ParentTable is the table that holds the parent relation/edge.
+	ParentTable = "directories"
+	// ParentColumn is the table column denoting the parent relation/edge.
+	ParentColumn = "parent_id"
+	// ChildrenTable is the table that holds the children relation/edge.
+	ChildrenTable = "directories"
+	// ChildrenColumn is the table column denoting the children relation/edge.
+	ChildrenColumn = "parent_id"
 )
 
 // Columns holds all SQL columns for directory fields.
@@ -69,8 +90,6 @@ var (
 	DefaultDeletedAt time.Time
 	// DefaultIsPublic holds the default value on creation for the "is_public" field.
 	DefaultIsPublic bool
-	// DefaultParentID holds the default value on creation for the "parent_id" field.
-	DefaultParentID int64
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() int64
 )

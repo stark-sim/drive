@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"drive/ent/directory"
+	"drive/ent/object"
 	"errors"
 	"fmt"
 	"time"
@@ -138,6 +139,41 @@ func (dc *DirectoryCreate) SetNillableID(i *int64) *DirectoryCreate {
 	return dc
 }
 
+// AddObjectIDs adds the "objects" edge to the Object entity by IDs.
+func (dc *DirectoryCreate) AddObjectIDs(ids ...int64) *DirectoryCreate {
+	dc.mutation.AddObjectIDs(ids...)
+	return dc
+}
+
+// AddObjects adds the "objects" edges to the Object entity.
+func (dc *DirectoryCreate) AddObjects(o ...*Object) *DirectoryCreate {
+	ids := make([]int64, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return dc.AddObjectIDs(ids...)
+}
+
+// SetParent sets the "parent" edge to the Directory entity.
+func (dc *DirectoryCreate) SetParent(d *Directory) *DirectoryCreate {
+	return dc.SetParentID(d.ID)
+}
+
+// AddChildIDs adds the "children" edge to the Directory entity by IDs.
+func (dc *DirectoryCreate) AddChildIDs(ids ...int64) *DirectoryCreate {
+	dc.mutation.AddChildIDs(ids...)
+	return dc
+}
+
+// AddChildren adds the "children" edges to the Directory entity.
+func (dc *DirectoryCreate) AddChildren(d ...*Directory) *DirectoryCreate {
+	ids := make([]int64, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
+	}
+	return dc.AddChildIDs(ids...)
+}
+
 // Mutation returns the DirectoryMutation object of the builder.
 func (dc *DirectoryCreate) Mutation() *DirectoryMutation {
 	return dc.mutation
@@ -239,10 +275,6 @@ func (dc *DirectoryCreate) defaults() {
 		v := directory.DefaultIsPublic
 		dc.mutation.SetIsPublic(v)
 	}
-	if _, ok := dc.mutation.ParentID(); !ok {
-		v := directory.DefaultParentID
-		dc.mutation.SetParentID(v)
-	}
 	if _, ok := dc.mutation.ID(); !ok {
 		v := directory.DefaultID()
 		dc.mutation.SetID(v)
@@ -271,9 +303,6 @@ func (dc *DirectoryCreate) check() error {
 	}
 	if _, ok := dc.mutation.IsPublic(); !ok {
 		return &ValidationError{Name: "is_public", err: errors.New(`ent: missing required field "Directory.is_public"`)}
-	}
-	if _, ok := dc.mutation.ParentID(); !ok {
-		return &ValidationError{Name: "parent_id", err: errors.New(`ent: missing required field "Directory.parent_id"`)}
 	}
 	return nil
 }
@@ -364,13 +393,63 @@ func (dc *DirectoryCreate) createSpec() (*Directory, *sqlgraph.CreateSpec) {
 		})
 		_node.IsPublic = value
 	}
-	if value, ok := dc.mutation.ParentID(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: directory.FieldParentID,
-		})
-		_node.ParentID = value
+	if nodes := dc.mutation.ObjectsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   directory.ObjectsTable,
+			Columns: []string{directory.ObjectsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: object.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := dc.mutation.ParentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   directory.ParentTable,
+			Columns: []string{directory.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.ParentID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := dc.mutation.ChildrenIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   directory.ChildrenTable,
+			Columns: []string{directory.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

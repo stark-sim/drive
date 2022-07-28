@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"drive/ent/directory"
 	"drive/ent/object"
 	"drive/ent/user"
 	"fmt"
@@ -29,19 +30,24 @@ type Object struct {
 	DeletedAt time.Time `json:"deleted_at,omitempty"`
 	// URL holds the value of the "url" field.
 	URL string `json:"url,omitempty"`
+	// IsPublic holds the value of the "is_public" field.
+	IsPublic bool `json:"is_public"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ObjectQuery when eager-loading is set.
-	Edges        ObjectEdges `json:"edges"`
-	user_objects *int64
+	Edges             ObjectEdges `json:"edges"`
+	directory_objects *int64
+	user_objects      *int64
 }
 
 // ObjectEdges holds the relations/edges for other nodes in the graph.
 type ObjectEdges struct {
 	// User holds the value of the user edge.
 	User *User `json:"user,omitempty"`
+	// Directory holds the value of the directory edge.
+	Directory *Directory `json:"directory,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // UserOrErr returns the User value or an error if the edge
@@ -58,18 +64,36 @@ func (e ObjectEdges) UserOrErr() (*User, error) {
 	return nil, &NotLoadedError{edge: "user"}
 }
 
+// DirectoryOrErr returns the Directory value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ObjectEdges) DirectoryOrErr() (*Directory, error) {
+	if e.loadedTypes[1] {
+		if e.Directory == nil {
+			// The edge directory was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: directory.Label}
+		}
+		return e.Directory, nil
+	}
+	return nil, &NotLoadedError{edge: "directory"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Object) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case object.FieldIsPublic:
+			values[i] = new(sql.NullBool)
 		case object.FieldID, object.FieldCreatedBy, object.FieldUpdatedBy:
 			values[i] = new(sql.NullInt64)
 		case object.FieldURL:
 			values[i] = new(sql.NullString)
 		case object.FieldCreatedAt, object.FieldUpdatedAt, object.FieldDeletedAt:
 			values[i] = new(sql.NullTime)
-		case object.ForeignKeys[0]: // user_objects
+		case object.ForeignKeys[0]: // directory_objects
+			values[i] = new(sql.NullInt64)
+		case object.ForeignKeys[1]: // user_objects
 			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Object", columns[i])
@@ -128,7 +152,20 @@ func (o *Object) assignValues(columns []string, values []interface{}) error {
 			} else if value.Valid {
 				o.URL = value.String
 			}
+		case object.FieldIsPublic:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_public", values[i])
+			} else if value.Valid {
+				o.IsPublic = value.Bool
+			}
 		case object.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field directory_objects", value)
+			} else if value.Valid {
+				o.directory_objects = new(int64)
+				*o.directory_objects = int64(value.Int64)
+			}
+		case object.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field user_objects", value)
 			} else if value.Valid {
@@ -143,6 +180,11 @@ func (o *Object) assignValues(columns []string, values []interface{}) error {
 // QueryUser queries the "user" edge of the Object entity.
 func (o *Object) QueryUser() *UserQuery {
 	return (&ObjectClient{config: o.config}).QueryUser(o)
+}
+
+// QueryDirectory queries the "directory" edge of the Object entity.
+func (o *Object) QueryDirectory() *DirectoryQuery {
+	return (&ObjectClient{config: o.config}).QueryDirectory(o)
 }
 
 // Update returns a builder for updating this Object.
@@ -185,6 +227,9 @@ func (o *Object) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("url=")
 	builder.WriteString(o.URL)
+	builder.WriteString(", ")
+	builder.WriteString("is_public=")
+	builder.WriteString(fmt.Sprintf("%v", o.IsPublic))
 	builder.WriteByte(')')
 	return builder.String()
 }

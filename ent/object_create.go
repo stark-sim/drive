@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"drive/ent/directory"
 	"drive/ent/object"
 	"drive/ent/user"
 	"errors"
@@ -97,6 +98,20 @@ func (oc *ObjectCreate) SetURL(s string) *ObjectCreate {
 	return oc
 }
 
+// SetIsPublic sets the "is_public" field.
+func (oc *ObjectCreate) SetIsPublic(b bool) *ObjectCreate {
+	oc.mutation.SetIsPublic(b)
+	return oc
+}
+
+// SetNillableIsPublic sets the "is_public" field if the given value is not nil.
+func (oc *ObjectCreate) SetNillableIsPublic(b *bool) *ObjectCreate {
+	if b != nil {
+		oc.SetIsPublic(*b)
+	}
+	return oc
+}
+
 // SetID sets the "id" field.
 func (oc *ObjectCreate) SetID(i int64) *ObjectCreate {
 	oc.mutation.SetID(i)
@@ -128,6 +143,25 @@ func (oc *ObjectCreate) SetNillableUserID(id *int64) *ObjectCreate {
 // SetUser sets the "user" edge to the User entity.
 func (oc *ObjectCreate) SetUser(u *User) *ObjectCreate {
 	return oc.SetUserID(u.ID)
+}
+
+// SetDirectoryID sets the "directory" edge to the Directory entity by ID.
+func (oc *ObjectCreate) SetDirectoryID(id int64) *ObjectCreate {
+	oc.mutation.SetDirectoryID(id)
+	return oc
+}
+
+// SetNillableDirectoryID sets the "directory" edge to the Directory entity by ID if the given value is not nil.
+func (oc *ObjectCreate) SetNillableDirectoryID(id *int64) *ObjectCreate {
+	if id != nil {
+		oc = oc.SetDirectoryID(*id)
+	}
+	return oc
+}
+
+// SetDirectory sets the "directory" edge to the Directory entity.
+func (oc *ObjectCreate) SetDirectory(d *Directory) *ObjectCreate {
+	return oc.SetDirectoryID(d.ID)
 }
 
 // Mutation returns the ObjectMutation object of the builder.
@@ -227,6 +261,10 @@ func (oc *ObjectCreate) defaults() {
 		v := object.DefaultDeletedAt
 		oc.mutation.SetDeletedAt(v)
 	}
+	if _, ok := oc.mutation.IsPublic(); !ok {
+		v := object.DefaultIsPublic
+		oc.mutation.SetIsPublic(v)
+	}
 	if _, ok := oc.mutation.ID(); !ok {
 		v := object.DefaultID()
 		oc.mutation.SetID(v)
@@ -252,6 +290,9 @@ func (oc *ObjectCreate) check() error {
 	}
 	if _, ok := oc.mutation.URL(); !ok {
 		return &ValidationError{Name: "url", err: errors.New(`ent: missing required field "Object.url"`)}
+	}
+	if _, ok := oc.mutation.IsPublic(); !ok {
+		return &ValidationError{Name: "is_public", err: errors.New(`ent: missing required field "Object.is_public"`)}
 	}
 	return nil
 }
@@ -334,6 +375,14 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 		})
 		_node.URL = value
 	}
+	if value, ok := oc.mutation.IsPublic(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: object.FieldIsPublic,
+		})
+		_node.IsPublic = value
+	}
 	if nodes := oc.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -352,6 +401,26 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.user_objects = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := oc.mutation.DirectoryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   object.DirectoryTable,
+			Columns: []string{object.DirectoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.directory_objects = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

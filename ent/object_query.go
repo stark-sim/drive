@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"drive/ent/directory"
 	"drive/ent/object"
 	"drive/ent/predicate"
 	"drive/ent/user"
@@ -25,8 +26,9 @@ type ObjectQuery struct {
 	fields     []string
 	predicates []predicate.Object
 	// eager-loading edges.
-	withUser *UserQuery
-	withFKs  bool
+	withUser      *UserQuery
+	withDirectory *DirectoryQuery
+	withFKs       bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -78,6 +80,28 @@ func (oq *ObjectQuery) QueryUser() *UserQuery {
 			sqlgraph.From(object.Table, object.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, object.UserTable, object.UserColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryDirectory chains the current query on the "directory" edge.
+func (oq *ObjectQuery) QueryDirectory() *DirectoryQuery {
+	query := &DirectoryQuery{config: oq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := oq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := oq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(object.Table, object.FieldID, selector),
+			sqlgraph.To(directory.Table, directory.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, object.DirectoryTable, object.DirectoryColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
 		return fromU, nil
@@ -261,12 +285,13 @@ func (oq *ObjectQuery) Clone() *ObjectQuery {
 		return nil
 	}
 	return &ObjectQuery{
-		config:     oq.config,
-		limit:      oq.limit,
-		offset:     oq.offset,
-		order:      append([]OrderFunc{}, oq.order...),
-		predicates: append([]predicate.Object{}, oq.predicates...),
-		withUser:   oq.withUser.Clone(),
+		config:        oq.config,
+		limit:         oq.limit,
+		offset:        oq.offset,
+		order:         append([]OrderFunc{}, oq.order...),
+		predicates:    append([]predicate.Object{}, oq.predicates...),
+		withUser:      oq.withUser.Clone(),
+		withDirectory: oq.withDirectory.Clone(),
 		// clone intermediate query.
 		sql:    oq.sql.Clone(),
 		path:   oq.path,
@@ -282,6 +307,17 @@ func (oq *ObjectQuery) WithUser(opts ...func(*UserQuery)) *ObjectQuery {
 		opt(query)
 	}
 	oq.withUser = query
+	return oq
+}
+
+// WithDirectory tells the query-builder to eager-load the nodes that are connected to
+// the "directory" edge. The optional arguments are used to configure the query builder of the edge.
+func (oq *ObjectQuery) WithDirectory(opts ...func(*DirectoryQuery)) *ObjectQuery {
+	query := &DirectoryQuery{config: oq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	oq.withDirectory = query
 	return oq
 }
 
@@ -356,11 +392,12 @@ func (oq *ObjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Objec
 		nodes       = []*Object{}
 		withFKs     = oq.withFKs
 		_spec       = oq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			oq.withUser != nil,
+			oq.withDirectory != nil,
 		}
 	)
-	if oq.withUser != nil {
+	if oq.withUser != nil || oq.withDirectory != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -410,6 +447,35 @@ func (oq *ObjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Objec
 			}
 			for i := range nodes {
 				nodes[i].Edges.User = n
+			}
+		}
+	}
+
+	if query := oq.withDirectory; query != nil {
+		ids := make([]int64, 0, len(nodes))
+		nodeids := make(map[int64][]*Object)
+		for i := range nodes {
+			if nodes[i].directory_objects == nil {
+				continue
+			}
+			fk := *nodes[i].directory_objects
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
+		}
+		query.Where(directory.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "directory_objects" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Directory = n
 			}
 		}
 	}

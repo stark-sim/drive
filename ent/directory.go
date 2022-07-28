@@ -29,9 +29,57 @@ type Directory struct {
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// IsPublic holds the value of the "is_public" field.
-	IsPublic bool `json:"is_public,omitempty"`
+	IsPublic bool `json:"is_public"`
 	// ParentID holds the value of the "parent_id" field.
-	ParentID int64 `json:"parent_id,omitempty"`
+	ParentID int64 `json:"parent_id"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the DirectoryQuery when eager-loading is set.
+	Edges DirectoryEdges `json:"edges"`
+}
+
+// DirectoryEdges holds the relations/edges for other nodes in the graph.
+type DirectoryEdges struct {
+	// Objects holds the value of the objects edge.
+	Objects []*Object `json:"objects,omitempty"`
+	// Parent holds the value of the parent edge.
+	Parent *Directory `json:"parent,omitempty"`
+	// Children holds the value of the children edge.
+	Children []*Directory `json:"children,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [3]bool
+}
+
+// ObjectsOrErr returns the Objects value or an error if the edge
+// was not loaded in eager-loading.
+func (e DirectoryEdges) ObjectsOrErr() ([]*Object, error) {
+	if e.loadedTypes[0] {
+		return e.Objects, nil
+	}
+	return nil, &NotLoadedError{edge: "objects"}
+}
+
+// ParentOrErr returns the Parent value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e DirectoryEdges) ParentOrErr() (*Directory, error) {
+	if e.loadedTypes[1] {
+		if e.Parent == nil {
+			// The edge parent was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: directory.Label}
+		}
+		return e.Parent, nil
+	}
+	return nil, &NotLoadedError{edge: "parent"}
+}
+
+// ChildrenOrErr returns the Children value or an error if the edge
+// was not loaded in eager-loading.
+func (e DirectoryEdges) ChildrenOrErr() ([]*Directory, error) {
+	if e.loadedTypes[2] {
+		return e.Children, nil
+	}
+	return nil, &NotLoadedError{edge: "children"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -119,6 +167,21 @@ func (d *Directory) assignValues(columns []string, values []interface{}) error {
 		}
 	}
 	return nil
+}
+
+// QueryObjects queries the "objects" edge of the Directory entity.
+func (d *Directory) QueryObjects() *ObjectQuery {
+	return (&DirectoryClient{config: d.config}).QueryObjects(d)
+}
+
+// QueryParent queries the "parent" edge of the Directory entity.
+func (d *Directory) QueryParent() *DirectoryQuery {
+	return (&DirectoryClient{config: d.config}).QueryParent(d)
+}
+
+// QueryChildren queries the "children" edge of the Directory entity.
+func (d *Directory) QueryChildren() *DirectoryQuery {
+	return (&DirectoryClient{config: d.config}).QueryChildren(d)
 }
 
 // Update returns a builder for updating this Directory.

@@ -222,6 +222,54 @@ func (c *DirectoryClient) GetX(ctx context.Context, id int64) *Directory {
 	return obj
 }
 
+// QueryObjects queries the objects edge of a Directory.
+func (c *DirectoryClient) QueryObjects(d *Directory) *ObjectQuery {
+	query := &ObjectQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := d.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(directory.Table, directory.FieldID, id),
+			sqlgraph.To(object.Table, object.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, directory.ObjectsTable, directory.ObjectsColumn),
+		)
+		fromV = sqlgraph.Neighbors(d.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryParent queries the parent edge of a Directory.
+func (c *DirectoryClient) QueryParent(d *Directory) *DirectoryQuery {
+	query := &DirectoryQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := d.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(directory.Table, directory.FieldID, id),
+			sqlgraph.To(directory.Table, directory.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, directory.ParentTable, directory.ParentColumn),
+		)
+		fromV = sqlgraph.Neighbors(d.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryChildren queries the children edge of a Directory.
+func (c *DirectoryClient) QueryChildren(d *Directory) *DirectoryQuery {
+	query := &DirectoryQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := d.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(directory.Table, directory.FieldID, id),
+			sqlgraph.To(directory.Table, directory.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, directory.ChildrenTable, directory.ChildrenColumn),
+		)
+		fromV = sqlgraph.Neighbors(d.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *DirectoryClient) Hooks() []Hook {
 	return c.hooks.Directory
@@ -321,6 +369,22 @@ func (c *ObjectClient) QueryUser(o *Object) *UserQuery {
 			sqlgraph.From(object.Table, object.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, object.UserTable, object.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryDirectory queries the directory edge of a Object.
+func (c *ObjectClient) QueryDirectory(o *Object) *DirectoryQuery {
+	query := &DirectoryQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(object.Table, object.FieldID, id),
+			sqlgraph.To(directory.Table, directory.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, object.DirectoryTable, object.DirectoryColumn),
 		)
 		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
 		return fromV, nil

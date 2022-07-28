@@ -45,10 +45,6 @@ func init() {
 	directoryDescIsPublic := directoryFields[1].Descriptor()
 	// directory.DefaultIsPublic holds the default value on creation for the is_public field.
 	directory.DefaultIsPublic = directoryDescIsPublic.Default.(bool)
-	// directoryDescParentID is the schema descriptor for parent_id field.
-	directoryDescParentID := directoryFields[2].Descriptor()
-	// directory.DefaultParentID holds the default value on creation for the parent_id field.
-	directory.DefaultParentID = directoryDescParentID.Default.(int64)
 	// directoryDescID is the schema descriptor for id field.
 	directoryDescID := directoryMixinFields0[0].Descriptor()
 	// directory.DefaultID holds the default value on creation for the id field.
@@ -80,6 +76,10 @@ func init() {
 	objectDescDeletedAt := objectMixinFields0[5].Descriptor()
 	// object.DefaultDeletedAt holds the default value on creation for the deleted_at field.
 	object.DefaultDeletedAt = objectDescDeletedAt.Default.(time.Time)
+	// objectDescIsPublic is the schema descriptor for is_public field.
+	objectDescIsPublic := objectFields[1].Descriptor()
+	// object.DefaultIsPublic holds the default value on creation for the is_public field.
+	object.DefaultIsPublic = objectDescIsPublic.Default.(bool)
 	// objectDescID is the schema descriptor for id field.
 	objectDescID := objectMixinFields0[0].Descriptor()
 	// object.DefaultID holds the default value on creation for the id field.

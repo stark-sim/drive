@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"drive/ent/directory"
 	"drive/ent/object"
 	"drive/ent/predicate"
 	"drive/ent/user"
@@ -97,6 +98,20 @@ func (ou *ObjectUpdate) SetURL(s string) *ObjectUpdate {
 	return ou
 }
 
+// SetIsPublic sets the "is_public" field.
+func (ou *ObjectUpdate) SetIsPublic(b bool) *ObjectUpdate {
+	ou.mutation.SetIsPublic(b)
+	return ou
+}
+
+// SetNillableIsPublic sets the "is_public" field if the given value is not nil.
+func (ou *ObjectUpdate) SetNillableIsPublic(b *bool) *ObjectUpdate {
+	if b != nil {
+		ou.SetIsPublic(*b)
+	}
+	return ou
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (ou *ObjectUpdate) SetUserID(id int64) *ObjectUpdate {
 	ou.mutation.SetUserID(id)
@@ -116,6 +131,25 @@ func (ou *ObjectUpdate) SetUser(u *User) *ObjectUpdate {
 	return ou.SetUserID(u.ID)
 }
 
+// SetDirectoryID sets the "directory" edge to the Directory entity by ID.
+func (ou *ObjectUpdate) SetDirectoryID(id int64) *ObjectUpdate {
+	ou.mutation.SetDirectoryID(id)
+	return ou
+}
+
+// SetNillableDirectoryID sets the "directory" edge to the Directory entity by ID if the given value is not nil.
+func (ou *ObjectUpdate) SetNillableDirectoryID(id *int64) *ObjectUpdate {
+	if id != nil {
+		ou = ou.SetDirectoryID(*id)
+	}
+	return ou
+}
+
+// SetDirectory sets the "directory" edge to the Directory entity.
+func (ou *ObjectUpdate) SetDirectory(d *Directory) *ObjectUpdate {
+	return ou.SetDirectoryID(d.ID)
+}
+
 // Mutation returns the ObjectMutation object of the builder.
 func (ou *ObjectUpdate) Mutation() *ObjectMutation {
 	return ou.mutation
@@ -124,6 +158,12 @@ func (ou *ObjectUpdate) Mutation() *ObjectMutation {
 // ClearUser clears the "user" edge to the User entity.
 func (ou *ObjectUpdate) ClearUser() *ObjectUpdate {
 	ou.mutation.ClearUser()
+	return ou
+}
+
+// ClearDirectory clears the "directory" edge to the Directory entity.
+func (ou *ObjectUpdate) ClearDirectory() *ObjectUpdate {
+	ou.mutation.ClearDirectory()
 	return ou
 }
 
@@ -257,6 +297,13 @@ func (ou *ObjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: object.FieldURL,
 		})
 	}
+	if value, ok := ou.mutation.IsPublic(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: object.FieldIsPublic,
+		})
+	}
 	if ou.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -284,6 +331,41 @@ func (ou *ObjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt64,
 					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ou.mutation.DirectoryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   object.DirectoryTable,
+			Columns: []string{object.DirectoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.DirectoryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   object.DirectoryTable,
+			Columns: []string{object.DirectoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
 				},
 			},
 		}
@@ -379,6 +461,20 @@ func (ouo *ObjectUpdateOne) SetURL(s string) *ObjectUpdateOne {
 	return ouo
 }
 
+// SetIsPublic sets the "is_public" field.
+func (ouo *ObjectUpdateOne) SetIsPublic(b bool) *ObjectUpdateOne {
+	ouo.mutation.SetIsPublic(b)
+	return ouo
+}
+
+// SetNillableIsPublic sets the "is_public" field if the given value is not nil.
+func (ouo *ObjectUpdateOne) SetNillableIsPublic(b *bool) *ObjectUpdateOne {
+	if b != nil {
+		ouo.SetIsPublic(*b)
+	}
+	return ouo
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (ouo *ObjectUpdateOne) SetUserID(id int64) *ObjectUpdateOne {
 	ouo.mutation.SetUserID(id)
@@ -398,6 +494,25 @@ func (ouo *ObjectUpdateOne) SetUser(u *User) *ObjectUpdateOne {
 	return ouo.SetUserID(u.ID)
 }
 
+// SetDirectoryID sets the "directory" edge to the Directory entity by ID.
+func (ouo *ObjectUpdateOne) SetDirectoryID(id int64) *ObjectUpdateOne {
+	ouo.mutation.SetDirectoryID(id)
+	return ouo
+}
+
+// SetNillableDirectoryID sets the "directory" edge to the Directory entity by ID if the given value is not nil.
+func (ouo *ObjectUpdateOne) SetNillableDirectoryID(id *int64) *ObjectUpdateOne {
+	if id != nil {
+		ouo = ouo.SetDirectoryID(*id)
+	}
+	return ouo
+}
+
+// SetDirectory sets the "directory" edge to the Directory entity.
+func (ouo *ObjectUpdateOne) SetDirectory(d *Directory) *ObjectUpdateOne {
+	return ouo.SetDirectoryID(d.ID)
+}
+
 // Mutation returns the ObjectMutation object of the builder.
 func (ouo *ObjectUpdateOne) Mutation() *ObjectMutation {
 	return ouo.mutation
@@ -406,6 +521,12 @@ func (ouo *ObjectUpdateOne) Mutation() *ObjectMutation {
 // ClearUser clears the "user" edge to the User entity.
 func (ouo *ObjectUpdateOne) ClearUser() *ObjectUpdateOne {
 	ouo.mutation.ClearUser()
+	return ouo
+}
+
+// ClearDirectory clears the "directory" edge to the Directory entity.
+func (ouo *ObjectUpdateOne) ClearDirectory() *ObjectUpdateOne {
+	ouo.mutation.ClearDirectory()
 	return ouo
 }
 
@@ -569,6 +690,13 @@ func (ouo *ObjectUpdateOne) sqlSave(ctx context.Context) (_node *Object, err err
 			Column: object.FieldURL,
 		})
 	}
+	if value, ok := ouo.mutation.IsPublic(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: object.FieldIsPublic,
+		})
+	}
 	if ouo.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -596,6 +724,41 @@ func (ouo *ObjectUpdateOne) sqlSave(ctx context.Context) (_node *Object, err err
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt64,
 					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ouo.mutation.DirectoryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   object.DirectoryTable,
+			Columns: []string{object.DirectoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.DirectoryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   object.DirectoryTable,
+			Columns: []string{object.DirectoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
 				},
 			},
 		}

@@ -15,8 +15,10 @@ var (
 )
 
 func Init() {
-	UserRepository = userImpl.NewPgImpl(db.NewDBClient())
+	dbClient1 := db.NewDBClient()
+	UserRepository = userImpl.NewPgImpl(dbClient1)
 	UserService = userImpl.NewUserService(UserRepository)
 
-	DirectoryRepository = directoryImpl.NewPgImpl(db.NewDBClient())
+	dbClient2 := db.NewDBClient()
+	DirectoryRepository = directoryImpl.NewPgImpl(dbClient2)
 }

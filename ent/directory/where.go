@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
@@ -689,31 +690,101 @@ func ParentIDNotIn(vs ...int64) predicate.Directory {
 	})
 }
 
-// ParentIDGT applies the GT predicate on the "parent_id" field.
-func ParentIDGT(v int64) predicate.Directory {
+// ParentIDIsNil applies the IsNil predicate on the "parent_id" field.
+func ParentIDIsNil() predicate.Directory {
 	return predicate.Directory(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldParentID), v))
+		s.Where(sql.IsNull(s.C(FieldParentID)))
 	})
 }
 
-// ParentIDGTE applies the GTE predicate on the "parent_id" field.
-func ParentIDGTE(v int64) predicate.Directory {
+// ParentIDNotNil applies the NotNil predicate on the "parent_id" field.
+func ParentIDNotNil() predicate.Directory {
 	return predicate.Directory(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldParentID), v))
+		s.Where(sql.NotNull(s.C(FieldParentID)))
 	})
 }
 
-// ParentIDLT applies the LT predicate on the "parent_id" field.
-func ParentIDLT(v int64) predicate.Directory {
+// HasObjects applies the HasEdge predicate on the "objects" edge.
+func HasObjects() predicate.Directory {
 	return predicate.Directory(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldParentID), v))
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ObjectsTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ObjectsTable, ObjectsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// ParentIDLTE applies the LTE predicate on the "parent_id" field.
-func ParentIDLTE(v int64) predicate.Directory {
+// HasObjectsWith applies the HasEdge predicate on the "objects" edge with a given conditions (other predicates).
+func HasObjectsWith(preds ...predicate.Object) predicate.Directory {
 	return predicate.Directory(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldParentID), v))
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ObjectsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ObjectsTable, ObjectsColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasParent applies the HasEdge predicate on the "parent" edge.
+func HasParent() predicate.Directory {
+	return predicate.Directory(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ParentTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ParentTable, ParentColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasParentWith applies the HasEdge predicate on the "parent" edge with a given conditions (other predicates).
+func HasParentWith(preds ...predicate.Directory) predicate.Directory {
+	return predicate.Directory(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ParentTable, ParentColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasChildren applies the HasEdge predicate on the "children" edge.
+func HasChildren() predicate.Directory {
+	return predicate.Directory(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ChildrenTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ChildrenTable, ChildrenColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasChildrenWith applies the HasEdge predicate on the "children" edge with a given conditions (other predicates).
+func HasChildrenWith(preds ...predicate.Directory) predicate.Directory {
+	return predicate.Directory(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ChildrenTable, ChildrenColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
 	})
 }
 

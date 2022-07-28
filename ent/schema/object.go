@@ -15,6 +15,7 @@ type Object struct {
 func (Object) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("url"),
+		field.Bool("is_public").Default(true).StructTag(`json:"is_public"`),
 	}
 }
 
@@ -22,6 +23,7 @@ func (Object) Fields() []ent.Field {
 func (Object) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("user", User.Type).Ref("objects").Unique(),
+		edge.From("directory", Directory.Type).Ref("objects").Unique(),
 	}
 }
 
@@ -30,4 +32,3 @@ func (Object) Mixin() []ent.Mixin {
 		BaseMixin{},
 	}
 }
-

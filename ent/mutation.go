@@ -33,24 +33,30 @@ const (
 // DirectoryMutation represents an operation that mutates the Directory nodes in the graph.
 type DirectoryMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int64
-	created_by    *int64
-	addcreated_by *int64
-	updated_by    *int64
-	addupdated_by *int64
-	created_at    *time.Time
-	updated_at    *time.Time
-	deleted_at    *time.Time
-	name          *string
-	is_public     *bool
-	parent_id     *int64
-	addparent_id  *int64
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Directory, error)
-	predicates    []predicate.Directory
+	op              Op
+	typ             string
+	id              *int64
+	created_by      *int64
+	addcreated_by   *int64
+	updated_by      *int64
+	addupdated_by   *int64
+	created_at      *time.Time
+	updated_at      *time.Time
+	deleted_at      *time.Time
+	name            *string
+	is_public       *bool
+	clearedFields   map[string]struct{}
+	objects         map[int64]struct{}
+	removedobjects  map[int64]struct{}
+	clearedobjects  bool
+	parent          *int64
+	clearedparent   bool
+	children        map[int64]struct{}
+	removedchildren map[int64]struct{}
+	clearedchildren bool
+	done            bool
+	oldValue        func(context.Context) (*Directory, error)
+	predicates      []predicate.Directory
 }
 
 var _ ent.Mutation = (*DirectoryMutation)(nil)
@@ -451,13 +457,12 @@ func (m *DirectoryMutation) ResetIsPublic() {
 
 // SetParentID sets the "parent_id" field.
 func (m *DirectoryMutation) SetParentID(i int64) {
-	m.parent_id = &i
-	m.addparent_id = nil
+	m.parent = &i
 }
 
 // ParentID returns the value of the "parent_id" field in the mutation.
 func (m *DirectoryMutation) ParentID() (r int64, exists bool) {
-	v := m.parent_id
+	v := m.parent
 	if v == nil {
 		return
 	}
@@ -481,28 +486,156 @@ func (m *DirectoryMutation) OldParentID(ctx context.Context) (v int64, err error
 	return oldValue.ParentID, nil
 }
 
-// AddParentID adds i to the "parent_id" field.
-func (m *DirectoryMutation) AddParentID(i int64) {
-	if m.addparent_id != nil {
-		*m.addparent_id += i
-	} else {
-		m.addparent_id = &i
-	}
+// ClearParentID clears the value of the "parent_id" field.
+func (m *DirectoryMutation) ClearParentID() {
+	m.parent = nil
+	m.clearedFields[directory.FieldParentID] = struct{}{}
 }
 
-// AddedParentID returns the value that was added to the "parent_id" field in this mutation.
-func (m *DirectoryMutation) AddedParentID() (r int64, exists bool) {
-	v := m.addparent_id
-	if v == nil {
-		return
-	}
-	return *v, true
+// ParentIDCleared returns if the "parent_id" field was cleared in this mutation.
+func (m *DirectoryMutation) ParentIDCleared() bool {
+	_, ok := m.clearedFields[directory.FieldParentID]
+	return ok
 }
 
 // ResetParentID resets all changes to the "parent_id" field.
 func (m *DirectoryMutation) ResetParentID() {
-	m.parent_id = nil
-	m.addparent_id = nil
+	m.parent = nil
+	delete(m.clearedFields, directory.FieldParentID)
+}
+
+// AddObjectIDs adds the "objects" edge to the Object entity by ids.
+func (m *DirectoryMutation) AddObjectIDs(ids ...int64) {
+	if m.objects == nil {
+		m.objects = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.objects[ids[i]] = struct{}{}
+	}
+}
+
+// ClearObjects clears the "objects" edge to the Object entity.
+func (m *DirectoryMutation) ClearObjects() {
+	m.clearedobjects = true
+}
+
+// ObjectsCleared reports if the "objects" edge to the Object entity was cleared.
+func (m *DirectoryMutation) ObjectsCleared() bool {
+	return m.clearedobjects
+}
+
+// RemoveObjectIDs removes the "objects" edge to the Object entity by IDs.
+func (m *DirectoryMutation) RemoveObjectIDs(ids ...int64) {
+	if m.removedobjects == nil {
+		m.removedobjects = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.objects, ids[i])
+		m.removedobjects[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedObjects returns the removed IDs of the "objects" edge to the Object entity.
+func (m *DirectoryMutation) RemovedObjectsIDs() (ids []int64) {
+	for id := range m.removedobjects {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ObjectsIDs returns the "objects" edge IDs in the mutation.
+func (m *DirectoryMutation) ObjectsIDs() (ids []int64) {
+	for id := range m.objects {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetObjects resets all changes to the "objects" edge.
+func (m *DirectoryMutation) ResetObjects() {
+	m.objects = nil
+	m.clearedobjects = false
+	m.removedobjects = nil
+}
+
+// ClearParent clears the "parent" edge to the Directory entity.
+func (m *DirectoryMutation) ClearParent() {
+	m.clearedparent = true
+}
+
+// ParentCleared reports if the "parent" edge to the Directory entity was cleared.
+func (m *DirectoryMutation) ParentCleared() bool {
+	return m.ParentIDCleared() || m.clearedparent
+}
+
+// ParentIDs returns the "parent" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ParentID instead. It exists only for internal usage by the builders.
+func (m *DirectoryMutation) ParentIDs() (ids []int64) {
+	if id := m.parent; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetParent resets all changes to the "parent" edge.
+func (m *DirectoryMutation) ResetParent() {
+	m.parent = nil
+	m.clearedparent = false
+}
+
+// AddChildIDs adds the "children" edge to the Directory entity by ids.
+func (m *DirectoryMutation) AddChildIDs(ids ...int64) {
+	if m.children == nil {
+		m.children = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.children[ids[i]] = struct{}{}
+	}
+}
+
+// ClearChildren clears the "children" edge to the Directory entity.
+func (m *DirectoryMutation) ClearChildren() {
+	m.clearedchildren = true
+}
+
+// ChildrenCleared reports if the "children" edge to the Directory entity was cleared.
+func (m *DirectoryMutation) ChildrenCleared() bool {
+	return m.clearedchildren
+}
+
+// RemoveChildIDs removes the "children" edge to the Directory entity by IDs.
+func (m *DirectoryMutation) RemoveChildIDs(ids ...int64) {
+	if m.removedchildren == nil {
+		m.removedchildren = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.children, ids[i])
+		m.removedchildren[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedChildren returns the removed IDs of the "children" edge to the Directory entity.
+func (m *DirectoryMutation) RemovedChildrenIDs() (ids []int64) {
+	for id := range m.removedchildren {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ChildrenIDs returns the "children" edge IDs in the mutation.
+func (m *DirectoryMutation) ChildrenIDs() (ids []int64) {
+	for id := range m.children {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetChildren resets all changes to the "children" edge.
+func (m *DirectoryMutation) ResetChildren() {
+	m.children = nil
+	m.clearedchildren = false
+	m.removedchildren = nil
 }
 
 // Where appends a list predicates to the DirectoryMutation builder.
@@ -546,7 +679,7 @@ func (m *DirectoryMutation) Fields() []string {
 	if m.is_public != nil {
 		fields = append(fields, directory.FieldIsPublic)
 	}
-	if m.parent_id != nil {
+	if m.parent != nil {
 		fields = append(fields, directory.FieldParentID)
 	}
 	return fields
@@ -677,9 +810,6 @@ func (m *DirectoryMutation) AddedFields() []string {
 	if m.addupdated_by != nil {
 		fields = append(fields, directory.FieldUpdatedBy)
 	}
-	if m.addparent_id != nil {
-		fields = append(fields, directory.FieldParentID)
-	}
 	return fields
 }
 
@@ -692,8 +822,6 @@ func (m *DirectoryMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedCreatedBy()
 	case directory.FieldUpdatedBy:
 		return m.AddedUpdatedBy()
-	case directory.FieldParentID:
-		return m.AddedParentID()
 	}
 	return nil, false
 }
@@ -717,13 +845,6 @@ func (m *DirectoryMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddUpdatedBy(v)
 		return nil
-	case directory.FieldParentID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddParentID(v)
-		return nil
 	}
 	return fmt.Errorf("unknown Directory numeric field %s", name)
 }
@@ -731,7 +852,11 @@ func (m *DirectoryMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *DirectoryMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(directory.FieldParentID) {
+		fields = append(fields, directory.FieldParentID)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -744,6 +869,11 @@ func (m *DirectoryMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *DirectoryMutation) ClearField(name string) error {
+	switch name {
+	case directory.FieldParentID:
+		m.ClearParentID()
+		return nil
+	}
 	return fmt.Errorf("unknown Directory nullable field %s", name)
 }
 
@@ -781,72 +911,155 @@ func (m *DirectoryMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *DirectoryMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 3)
+	if m.objects != nil {
+		edges = append(edges, directory.EdgeObjects)
+	}
+	if m.parent != nil {
+		edges = append(edges, directory.EdgeParent)
+	}
+	if m.children != nil {
+		edges = append(edges, directory.EdgeChildren)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *DirectoryMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case directory.EdgeObjects:
+		ids := make([]ent.Value, 0, len(m.objects))
+		for id := range m.objects {
+			ids = append(ids, id)
+		}
+		return ids
+	case directory.EdgeParent:
+		if id := m.parent; id != nil {
+			return []ent.Value{*id}
+		}
+	case directory.EdgeChildren:
+		ids := make([]ent.Value, 0, len(m.children))
+		for id := range m.children {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *DirectoryMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 3)
+	if m.removedobjects != nil {
+		edges = append(edges, directory.EdgeObjects)
+	}
+	if m.removedchildren != nil {
+		edges = append(edges, directory.EdgeChildren)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *DirectoryMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case directory.EdgeObjects:
+		ids := make([]ent.Value, 0, len(m.removedobjects))
+		for id := range m.removedobjects {
+			ids = append(ids, id)
+		}
+		return ids
+	case directory.EdgeChildren:
+		ids := make([]ent.Value, 0, len(m.removedchildren))
+		for id := range m.removedchildren {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *DirectoryMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 3)
+	if m.clearedobjects {
+		edges = append(edges, directory.EdgeObjects)
+	}
+	if m.clearedparent {
+		edges = append(edges, directory.EdgeParent)
+	}
+	if m.clearedchildren {
+		edges = append(edges, directory.EdgeChildren)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *DirectoryMutation) EdgeCleared(name string) bool {
+	switch name {
+	case directory.EdgeObjects:
+		return m.clearedobjects
+	case directory.EdgeParent:
+		return m.clearedparent
+	case directory.EdgeChildren:
+		return m.clearedchildren
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *DirectoryMutation) ClearEdge(name string) error {
+	switch name {
+	case directory.EdgeParent:
+		m.ClearParent()
+		return nil
+	}
 	return fmt.Errorf("unknown Directory unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *DirectoryMutation) ResetEdge(name string) error {
+	switch name {
+	case directory.EdgeObjects:
+		m.ResetObjects()
+		return nil
+	case directory.EdgeParent:
+		m.ResetParent()
+		return nil
+	case directory.EdgeChildren:
+		m.ResetChildren()
+		return nil
+	}
 	return fmt.Errorf("unknown Directory edge %s", name)
 }
 
 // ObjectMutation represents an operation that mutates the Object nodes in the graph.
 type ObjectMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int64
-	created_by    *int64
-	addcreated_by *int64
-	updated_by    *int64
-	addupdated_by *int64
-	created_at    *time.Time
-	updated_at    *time.Time
-	deleted_at    *time.Time
-	url           *string
-	clearedFields map[string]struct{}
-	user          *int64
-	cleareduser   bool
-	done          bool
-	oldValue      func(context.Context) (*Object, error)
-	predicates    []predicate.Object
+	op               Op
+	typ              string
+	id               *int64
+	created_by       *int64
+	addcreated_by    *int64
+	updated_by       *int64
+	addupdated_by    *int64
+	created_at       *time.Time
+	updated_at       *time.Time
+	deleted_at       *time.Time
+	url              *string
+	is_public        *bool
+	clearedFields    map[string]struct{}
+	user             *int64
+	cleareduser      bool
+	directory        *int64
+	cleareddirectory bool
+	done             bool
+	oldValue         func(context.Context) (*Object, error)
+	predicates       []predicate.Object
 }
 
 var _ ent.Mutation = (*ObjectMutation)(nil)
@@ -1209,6 +1422,42 @@ func (m *ObjectMutation) ResetURL() {
 	m.url = nil
 }
 
+// SetIsPublic sets the "is_public" field.
+func (m *ObjectMutation) SetIsPublic(b bool) {
+	m.is_public = &b
+}
+
+// IsPublic returns the value of the "is_public" field in the mutation.
+func (m *ObjectMutation) IsPublic() (r bool, exists bool) {
+	v := m.is_public
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsPublic returns the old "is_public" field's value of the Object entity.
+// If the Object object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ObjectMutation) OldIsPublic(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsPublic is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsPublic requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsPublic: %w", err)
+	}
+	return oldValue.IsPublic, nil
+}
+
+// ResetIsPublic resets all changes to the "is_public" field.
+func (m *ObjectMutation) ResetIsPublic() {
+	m.is_public = nil
+}
+
 // SetUserID sets the "user" edge to the User entity by id.
 func (m *ObjectMutation) SetUserID(id int64) {
 	m.user = &id
@@ -1248,6 +1497,45 @@ func (m *ObjectMutation) ResetUser() {
 	m.cleareduser = false
 }
 
+// SetDirectoryID sets the "directory" edge to the Directory entity by id.
+func (m *ObjectMutation) SetDirectoryID(id int64) {
+	m.directory = &id
+}
+
+// ClearDirectory clears the "directory" edge to the Directory entity.
+func (m *ObjectMutation) ClearDirectory() {
+	m.cleareddirectory = true
+}
+
+// DirectoryCleared reports if the "directory" edge to the Directory entity was cleared.
+func (m *ObjectMutation) DirectoryCleared() bool {
+	return m.cleareddirectory
+}
+
+// DirectoryID returns the "directory" edge ID in the mutation.
+func (m *ObjectMutation) DirectoryID() (id int64, exists bool) {
+	if m.directory != nil {
+		return *m.directory, true
+	}
+	return
+}
+
+// DirectoryIDs returns the "directory" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// DirectoryID instead. It exists only for internal usage by the builders.
+func (m *ObjectMutation) DirectoryIDs() (ids []int64) {
+	if id := m.directory; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetDirectory resets all changes to the "directory" edge.
+func (m *ObjectMutation) ResetDirectory() {
+	m.directory = nil
+	m.cleareddirectory = false
+}
+
 // Where appends a list predicates to the ObjectMutation builder.
 func (m *ObjectMutation) Where(ps ...predicate.Object) {
 	m.predicates = append(m.predicates, ps...)
@@ -1267,7 +1555,7 @@ func (m *ObjectMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ObjectMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.created_by != nil {
 		fields = append(fields, object.FieldCreatedBy)
 	}
@@ -1285,6 +1573,9 @@ func (m *ObjectMutation) Fields() []string {
 	}
 	if m.url != nil {
 		fields = append(fields, object.FieldURL)
+	}
+	if m.is_public != nil {
+		fields = append(fields, object.FieldIsPublic)
 	}
 	return fields
 }
@@ -1306,6 +1597,8 @@ func (m *ObjectMutation) Field(name string) (ent.Value, bool) {
 		return m.DeletedAt()
 	case object.FieldURL:
 		return m.URL()
+	case object.FieldIsPublic:
+		return m.IsPublic()
 	}
 	return nil, false
 }
@@ -1327,6 +1620,8 @@ func (m *ObjectMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldDeletedAt(ctx)
 	case object.FieldURL:
 		return m.OldURL(ctx)
+	case object.FieldIsPublic:
+		return m.OldIsPublic(ctx)
 	}
 	return nil, fmt.Errorf("unknown Object field %s", name)
 }
@@ -1377,6 +1672,13 @@ func (m *ObjectMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetURL(v)
+		return nil
+	case object.FieldIsPublic:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsPublic(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Object field %s", name)
@@ -1472,15 +1774,21 @@ func (m *ObjectMutation) ResetField(name string) error {
 	case object.FieldURL:
 		m.ResetURL()
 		return nil
+	case object.FieldIsPublic:
+		m.ResetIsPublic()
+		return nil
 	}
 	return fmt.Errorf("unknown Object field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ObjectMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.user != nil {
 		edges = append(edges, object.EdgeUser)
+	}
+	if m.directory != nil {
+		edges = append(edges, object.EdgeDirectory)
 	}
 	return edges
 }
@@ -1493,13 +1801,17 @@ func (m *ObjectMutation) AddedIDs(name string) []ent.Value {
 		if id := m.user; id != nil {
 			return []ent.Value{*id}
 		}
+	case object.EdgeDirectory:
+		if id := m.directory; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ObjectMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	return edges
 }
 
@@ -1513,9 +1825,12 @@ func (m *ObjectMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ObjectMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.cleareduser {
 		edges = append(edges, object.EdgeUser)
+	}
+	if m.cleareddirectory {
+		edges = append(edges, object.EdgeDirectory)
 	}
 	return edges
 }
@@ -1526,6 +1841,8 @@ func (m *ObjectMutation) EdgeCleared(name string) bool {
 	switch name {
 	case object.EdgeUser:
 		return m.cleareduser
+	case object.EdgeDirectory:
+		return m.cleareddirectory
 	}
 	return false
 }
@@ -1537,6 +1854,9 @@ func (m *ObjectMutation) ClearEdge(name string) error {
 	case object.EdgeUser:
 		m.ClearUser()
 		return nil
+	case object.EdgeDirectory:
+		m.ClearDirectory()
+		return nil
 	}
 	return fmt.Errorf("unknown Object unique edge %s", name)
 }
@@ -1547,6 +1867,9 @@ func (m *ObjectMutation) ResetEdge(name string) error {
 	switch name {
 	case object.EdgeUser:
 		m.ResetUser()
+		return nil
+	case object.EdgeDirectory:
+		m.ResetDirectory()
 		return nil
 	}
 	return fmt.Errorf("unknown Object edge %s", name)

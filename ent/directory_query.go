@@ -4,7 +4,9 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"drive/ent/directory"
+	"drive/ent/object"
 	"drive/ent/predicate"
 	"fmt"
 	"math"
@@ -23,6 +25,10 @@ type DirectoryQuery struct {
 	order      []OrderFunc
 	fields     []string
 	predicates []predicate.Directory
+	// eager-loading edges.
+	withObjects  *ObjectQuery
+	withParent   *DirectoryQuery
+	withChildren *DirectoryQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -57,6 +63,72 @@ func (dq *DirectoryQuery) Unique(unique bool) *DirectoryQuery {
 func (dq *DirectoryQuery) Order(o ...OrderFunc) *DirectoryQuery {
 	dq.order = append(dq.order, o...)
 	return dq
+}
+
+// QueryObjects chains the current query on the "objects" edge.
+func (dq *DirectoryQuery) QueryObjects() *ObjectQuery {
+	query := &ObjectQuery{config: dq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := dq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := dq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(directory.Table, directory.FieldID, selector),
+			sqlgraph.To(object.Table, object.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, directory.ObjectsTable, directory.ObjectsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(dq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryParent chains the current query on the "parent" edge.
+func (dq *DirectoryQuery) QueryParent() *DirectoryQuery {
+	query := &DirectoryQuery{config: dq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := dq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := dq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(directory.Table, directory.FieldID, selector),
+			sqlgraph.To(directory.Table, directory.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, directory.ParentTable, directory.ParentColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(dq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryChildren chains the current query on the "children" edge.
+func (dq *DirectoryQuery) QueryChildren() *DirectoryQuery {
+	query := &DirectoryQuery{config: dq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := dq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := dq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(directory.Table, directory.FieldID, selector),
+			sqlgraph.To(directory.Table, directory.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, directory.ChildrenTable, directory.ChildrenColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(dq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Directory entity from the query.
@@ -235,16 +307,52 @@ func (dq *DirectoryQuery) Clone() *DirectoryQuery {
 		return nil
 	}
 	return &DirectoryQuery{
-		config:     dq.config,
-		limit:      dq.limit,
-		offset:     dq.offset,
-		order:      append([]OrderFunc{}, dq.order...),
-		predicates: append([]predicate.Directory{}, dq.predicates...),
+		config:       dq.config,
+		limit:        dq.limit,
+		offset:       dq.offset,
+		order:        append([]OrderFunc{}, dq.order...),
+		predicates:   append([]predicate.Directory{}, dq.predicates...),
+		withObjects:  dq.withObjects.Clone(),
+		withParent:   dq.withParent.Clone(),
+		withChildren: dq.withChildren.Clone(),
 		// clone intermediate query.
 		sql:    dq.sql.Clone(),
 		path:   dq.path,
 		unique: dq.unique,
 	}
+}
+
+// WithObjects tells the query-builder to eager-load the nodes that are connected to
+// the "objects" edge. The optional arguments are used to configure the query builder of the edge.
+func (dq *DirectoryQuery) WithObjects(opts ...func(*ObjectQuery)) *DirectoryQuery {
+	query := &ObjectQuery{config: dq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	dq.withObjects = query
+	return dq
+}
+
+// WithParent tells the query-builder to eager-load the nodes that are connected to
+// the "parent" edge. The optional arguments are used to configure the query builder of the edge.
+func (dq *DirectoryQuery) WithParent(opts ...func(*DirectoryQuery)) *DirectoryQuery {
+	query := &DirectoryQuery{config: dq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	dq.withParent = query
+	return dq
+}
+
+// WithChildren tells the query-builder to eager-load the nodes that are connected to
+// the "children" edge. The optional arguments are used to configure the query builder of the edge.
+func (dq *DirectoryQuery) WithChildren(opts ...func(*DirectoryQuery)) *DirectoryQuery {
+	query := &DirectoryQuery{config: dq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	dq.withChildren = query
+	return dq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -315,8 +423,13 @@ func (dq *DirectoryQuery) prepareQuery(ctx context.Context) error {
 
 func (dq *DirectoryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Directory, error) {
 	var (
-		nodes = []*Directory{}
-		_spec = dq.querySpec()
+		nodes       = []*Directory{}
+		_spec       = dq.querySpec()
+		loadedTypes = [3]bool{
+			dq.withObjects != nil,
+			dq.withParent != nil,
+			dq.withChildren != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		return (*Directory).scanValues(nil, columns)
@@ -324,6 +437,7 @@ func (dq *DirectoryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Di
 	_spec.Assign = func(columns []string, values []interface{}) error {
 		node := &Directory{config: dq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -335,6 +449,87 @@ func (dq *DirectoryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Di
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+
+	if query := dq.withObjects; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int64]*Directory)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Objects = []*Object{}
+		}
+		query.withFKs = true
+		query.Where(predicate.Object(func(s *sql.Selector) {
+			s.Where(sql.InValues(directory.ObjectsColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.directory_objects
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "directory_objects" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "directory_objects" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Objects = append(node.Edges.Objects, n)
+		}
+	}
+
+	if query := dq.withParent; query != nil {
+		ids := make([]int64, 0, len(nodes))
+		nodeids := make(map[int64][]*Directory)
+		for i := range nodes {
+			fk := nodes[i].ParentID
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
+		}
+		query.Where(directory.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "parent_id" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Parent = n
+			}
+		}
+	}
+
+	if query := dq.withChildren; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int64]*Directory)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Children = []*Directory{}
+		}
+		query.Where(predicate.Directory(func(s *sql.Selector) {
+			s.Where(sql.InValues(directory.ChildrenColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.ParentID
+			node, ok := nodeids[fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "parent_id" returned %v for node %v`, fk, n.ID)
+			}
+			node.Edges.Children = append(node.Edges.Children, n)
+		}
+	}
+
 	return nodes, nil
 }
 

@@ -18,13 +18,21 @@ var (
 		{Name: "deleted_at", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString},
 		{Name: "is_public", Type: field.TypeBool, Default: true},
-		{Name: "parent_id", Type: field.TypeInt64, Default: 0},
+		{Name: "parent_id", Type: field.TypeInt64, Nullable: true},
 	}
 	// DirectoriesTable holds the schema information for the "directories" table.
 	DirectoriesTable = &schema.Table{
 		Name:       "directories",
 		Columns:    DirectoriesColumns,
 		PrimaryKey: []*schema.Column{DirectoriesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "directories_directories_children",
+				Columns:    []*schema.Column{DirectoriesColumns[8]},
+				RefColumns: []*schema.Column{DirectoriesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// ObjectsColumns holds the columns for the "objects" table.
 	ObjectsColumns = []*schema.Column{
@@ -35,6 +43,8 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "deleted_at", Type: field.TypeTime},
 		{Name: "url", Type: field.TypeString},
+		{Name: "is_public", Type: field.TypeBool, Default: true},
+		{Name: "directory_objects", Type: field.TypeInt64, Nullable: true},
 		{Name: "user_objects", Type: field.TypeInt64, Nullable: true},
 	}
 	// ObjectsTable holds the schema information for the "objects" table.
@@ -44,8 +54,14 @@ var (
 		PrimaryKey: []*schema.Column{ObjectsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
+				Symbol:     "objects_directories_objects",
+				Columns:    []*schema.Column{ObjectsColumns[8]},
+				RefColumns: []*schema.Column{DirectoriesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
 				Symbol:     "objects_users_objects",
-				Columns:    []*schema.Column{ObjectsColumns[7]},
+				Columns:    []*schema.Column{ObjectsColumns[9]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -85,5 +101,7 @@ var (
 )
 
 func init() {
-	ObjectsTable.ForeignKeys[0].RefTable = UsersTable
+	DirectoriesTable.ForeignKeys[0].RefTable = DirectoriesTable
+	ObjectsTable.ForeignKeys[0].RefTable = DirectoriesTable
+	ObjectsTable.ForeignKeys[1].RefTable = UsersTable
 }

@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"drive/ent/directory"
+	"drive/ent/object"
 	"drive/ent/predicate"
 	"errors"
 	"fmt"
@@ -112,7 +113,6 @@ func (du *DirectoryUpdate) SetNillableIsPublic(b *bool) *DirectoryUpdate {
 
 // SetParentID sets the "parent_id" field.
 func (du *DirectoryUpdate) SetParentID(i int64) *DirectoryUpdate {
-	du.mutation.ResetParentID()
 	du.mutation.SetParentID(i)
 	return du
 }
@@ -125,15 +125,98 @@ func (du *DirectoryUpdate) SetNillableParentID(i *int64) *DirectoryUpdate {
 	return du
 }
 
-// AddParentID adds i to the "parent_id" field.
-func (du *DirectoryUpdate) AddParentID(i int64) *DirectoryUpdate {
-	du.mutation.AddParentID(i)
+// ClearParentID clears the value of the "parent_id" field.
+func (du *DirectoryUpdate) ClearParentID() *DirectoryUpdate {
+	du.mutation.ClearParentID()
 	return du
+}
+
+// AddObjectIDs adds the "objects" edge to the Object entity by IDs.
+func (du *DirectoryUpdate) AddObjectIDs(ids ...int64) *DirectoryUpdate {
+	du.mutation.AddObjectIDs(ids...)
+	return du
+}
+
+// AddObjects adds the "objects" edges to the Object entity.
+func (du *DirectoryUpdate) AddObjects(o ...*Object) *DirectoryUpdate {
+	ids := make([]int64, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return du.AddObjectIDs(ids...)
+}
+
+// SetParent sets the "parent" edge to the Directory entity.
+func (du *DirectoryUpdate) SetParent(d *Directory) *DirectoryUpdate {
+	return du.SetParentID(d.ID)
+}
+
+// AddChildIDs adds the "children" edge to the Directory entity by IDs.
+func (du *DirectoryUpdate) AddChildIDs(ids ...int64) *DirectoryUpdate {
+	du.mutation.AddChildIDs(ids...)
+	return du
+}
+
+// AddChildren adds the "children" edges to the Directory entity.
+func (du *DirectoryUpdate) AddChildren(d ...*Directory) *DirectoryUpdate {
+	ids := make([]int64, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
+	}
+	return du.AddChildIDs(ids...)
 }
 
 // Mutation returns the DirectoryMutation object of the builder.
 func (du *DirectoryUpdate) Mutation() *DirectoryMutation {
 	return du.mutation
+}
+
+// ClearObjects clears all "objects" edges to the Object entity.
+func (du *DirectoryUpdate) ClearObjects() *DirectoryUpdate {
+	du.mutation.ClearObjects()
+	return du
+}
+
+// RemoveObjectIDs removes the "objects" edge to Object entities by IDs.
+func (du *DirectoryUpdate) RemoveObjectIDs(ids ...int64) *DirectoryUpdate {
+	du.mutation.RemoveObjectIDs(ids...)
+	return du
+}
+
+// RemoveObjects removes "objects" edges to Object entities.
+func (du *DirectoryUpdate) RemoveObjects(o ...*Object) *DirectoryUpdate {
+	ids := make([]int64, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return du.RemoveObjectIDs(ids...)
+}
+
+// ClearParent clears the "parent" edge to the Directory entity.
+func (du *DirectoryUpdate) ClearParent() *DirectoryUpdate {
+	du.mutation.ClearParent()
+	return du
+}
+
+// ClearChildren clears all "children" edges to the Directory entity.
+func (du *DirectoryUpdate) ClearChildren() *DirectoryUpdate {
+	du.mutation.ClearChildren()
+	return du
+}
+
+// RemoveChildIDs removes the "children" edge to Directory entities by IDs.
+func (du *DirectoryUpdate) RemoveChildIDs(ids ...int64) *DirectoryUpdate {
+	du.mutation.RemoveChildIDs(ids...)
+	return du
+}
+
+// RemoveChildren removes "children" edges to Directory entities.
+func (du *DirectoryUpdate) RemoveChildren(d ...*Directory) *DirectoryUpdate {
+	ids := make([]int64, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
+	}
+	return du.RemoveChildIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -273,19 +356,148 @@ func (du *DirectoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: directory.FieldIsPublic,
 		})
 	}
-	if value, ok := du.mutation.ParentID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: directory.FieldParentID,
-		})
+	if du.mutation.ObjectsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   directory.ObjectsTable,
+			Columns: []string{directory.ObjectsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: object.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if value, ok := du.mutation.AddedParentID(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: directory.FieldParentID,
-		})
+	if nodes := du.mutation.RemovedObjectsIDs(); len(nodes) > 0 && !du.mutation.ObjectsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   directory.ObjectsTable,
+			Columns: []string{directory.ObjectsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: object.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := du.mutation.ObjectsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   directory.ObjectsTable,
+			Columns: []string{directory.ObjectsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: object.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if du.mutation.ParentCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   directory.ParentTable,
+			Columns: []string{directory.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := du.mutation.ParentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   directory.ParentTable,
+			Columns: []string{directory.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if du.mutation.ChildrenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   directory.ChildrenTable,
+			Columns: []string{directory.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := du.mutation.RemovedChildrenIDs(); len(nodes) > 0 && !du.mutation.ChildrenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   directory.ChildrenTable,
+			Columns: []string{directory.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := du.mutation.ChildrenIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   directory.ChildrenTable,
+			Columns: []string{directory.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, du.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -390,7 +602,6 @@ func (duo *DirectoryUpdateOne) SetNillableIsPublic(b *bool) *DirectoryUpdateOne 
 
 // SetParentID sets the "parent_id" field.
 func (duo *DirectoryUpdateOne) SetParentID(i int64) *DirectoryUpdateOne {
-	duo.mutation.ResetParentID()
 	duo.mutation.SetParentID(i)
 	return duo
 }
@@ -403,15 +614,98 @@ func (duo *DirectoryUpdateOne) SetNillableParentID(i *int64) *DirectoryUpdateOne
 	return duo
 }
 
-// AddParentID adds i to the "parent_id" field.
-func (duo *DirectoryUpdateOne) AddParentID(i int64) *DirectoryUpdateOne {
-	duo.mutation.AddParentID(i)
+// ClearParentID clears the value of the "parent_id" field.
+func (duo *DirectoryUpdateOne) ClearParentID() *DirectoryUpdateOne {
+	duo.mutation.ClearParentID()
 	return duo
+}
+
+// AddObjectIDs adds the "objects" edge to the Object entity by IDs.
+func (duo *DirectoryUpdateOne) AddObjectIDs(ids ...int64) *DirectoryUpdateOne {
+	duo.mutation.AddObjectIDs(ids...)
+	return duo
+}
+
+// AddObjects adds the "objects" edges to the Object entity.
+func (duo *DirectoryUpdateOne) AddObjects(o ...*Object) *DirectoryUpdateOne {
+	ids := make([]int64, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return duo.AddObjectIDs(ids...)
+}
+
+// SetParent sets the "parent" edge to the Directory entity.
+func (duo *DirectoryUpdateOne) SetParent(d *Directory) *DirectoryUpdateOne {
+	return duo.SetParentID(d.ID)
+}
+
+// AddChildIDs adds the "children" edge to the Directory entity by IDs.
+func (duo *DirectoryUpdateOne) AddChildIDs(ids ...int64) *DirectoryUpdateOne {
+	duo.mutation.AddChildIDs(ids...)
+	return duo
+}
+
+// AddChildren adds the "children" edges to the Directory entity.
+func (duo *DirectoryUpdateOne) AddChildren(d ...*Directory) *DirectoryUpdateOne {
+	ids := make([]int64, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
+	}
+	return duo.AddChildIDs(ids...)
 }
 
 // Mutation returns the DirectoryMutation object of the builder.
 func (duo *DirectoryUpdateOne) Mutation() *DirectoryMutation {
 	return duo.mutation
+}
+
+// ClearObjects clears all "objects" edges to the Object entity.
+func (duo *DirectoryUpdateOne) ClearObjects() *DirectoryUpdateOne {
+	duo.mutation.ClearObjects()
+	return duo
+}
+
+// RemoveObjectIDs removes the "objects" edge to Object entities by IDs.
+func (duo *DirectoryUpdateOne) RemoveObjectIDs(ids ...int64) *DirectoryUpdateOne {
+	duo.mutation.RemoveObjectIDs(ids...)
+	return duo
+}
+
+// RemoveObjects removes "objects" edges to Object entities.
+func (duo *DirectoryUpdateOne) RemoveObjects(o ...*Object) *DirectoryUpdateOne {
+	ids := make([]int64, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return duo.RemoveObjectIDs(ids...)
+}
+
+// ClearParent clears the "parent" edge to the Directory entity.
+func (duo *DirectoryUpdateOne) ClearParent() *DirectoryUpdateOne {
+	duo.mutation.ClearParent()
+	return duo
+}
+
+// ClearChildren clears all "children" edges to the Directory entity.
+func (duo *DirectoryUpdateOne) ClearChildren() *DirectoryUpdateOne {
+	duo.mutation.ClearChildren()
+	return duo
+}
+
+// RemoveChildIDs removes the "children" edge to Directory entities by IDs.
+func (duo *DirectoryUpdateOne) RemoveChildIDs(ids ...int64) *DirectoryUpdateOne {
+	duo.mutation.RemoveChildIDs(ids...)
+	return duo
+}
+
+// RemoveChildren removes "children" edges to Directory entities.
+func (duo *DirectoryUpdateOne) RemoveChildren(d ...*Directory) *DirectoryUpdateOne {
+	ids := make([]int64, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
+	}
+	return duo.RemoveChildIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -581,19 +875,148 @@ func (duo *DirectoryUpdateOne) sqlSave(ctx context.Context) (_node *Directory, e
 			Column: directory.FieldIsPublic,
 		})
 	}
-	if value, ok := duo.mutation.ParentID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: directory.FieldParentID,
-		})
+	if duo.mutation.ObjectsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   directory.ObjectsTable,
+			Columns: []string{directory.ObjectsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: object.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if value, ok := duo.mutation.AddedParentID(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: directory.FieldParentID,
-		})
+	if nodes := duo.mutation.RemovedObjectsIDs(); len(nodes) > 0 && !duo.mutation.ObjectsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   directory.ObjectsTable,
+			Columns: []string{directory.ObjectsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: object.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := duo.mutation.ObjectsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   directory.ObjectsTable,
+			Columns: []string{directory.ObjectsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: object.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if duo.mutation.ParentCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   directory.ParentTable,
+			Columns: []string{directory.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := duo.mutation.ParentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   directory.ParentTable,
+			Columns: []string{directory.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if duo.mutation.ChildrenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   directory.ChildrenTable,
+			Columns: []string{directory.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := duo.mutation.RemovedChildrenIDs(); len(nodes) > 0 && !duo.mutation.ChildrenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   directory.ChildrenTable,
+			Columns: []string{directory.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := duo.mutation.ChildrenIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   directory.ChildrenTable,
+			Columns: []string{directory.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: directory.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Directory{config: duo.config}
 	_spec.Assign = _node.assignValues
