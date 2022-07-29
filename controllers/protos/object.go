@@ -1,7 +1,9 @@
 package protos
 
 type ObjectCreateReq struct {
-	DirectoryID string `form:"directory_id" binding:"required"`
+	DirectoryID string `json:"directory_id" binding:"required"`
+	URL         string `json:"url" binding:"required"`
+	Name        string `json:"name" binding:"required"`
 	IsPublic    bool   `json:"is_public"`
 }
 

@@ -11,6 +11,8 @@ func Init() *gin.Engine {
 
 	r.POST("/temp", controllers.Temp)
 
+	r.POST("/cos", controllers.UploadFile)
+
 	r.POST("/register", controllers.UserAdd)
 	r.GET("/login", controllers.Login)
 
@@ -29,6 +31,11 @@ func Init() *gin.Engine {
 	directoriesR.POST("", controllers.DirectoryCreate)
 	directoriesR.PUT("", controllers.DirectoryUpdate)
 	directoriesR.DELETE("", controllers.DirectoryDelete)
+
+	objectsR := v1.Group("/objects")
+
+	objectsR.POST("", controllers.ObjectCreate)
+	objectsR.DELETE("", controllers.ObjectDelete)
 
 	return r
 }
