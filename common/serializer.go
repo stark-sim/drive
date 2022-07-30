@@ -45,7 +45,7 @@ func (s *ModelSerializer) Serialize() interface{} {
 			_ = json.Unmarshal(_json, &tempRes)
 
 			for k, v := range tempRes {
-				if k == "id" || k == "created_by" || k == "updated_by" || k == "parent_id" {
+				if k == "id" || k == "created_by" || k == "updated_by" || k == "parent_id" || k == "user_id" {
 					tempRes[k] = strconv.FormatInt(v.(int64), 10)
 				}
 			}
@@ -60,7 +60,7 @@ func (s *ModelSerializer) Serialize() interface{} {
 		_ = json.Unmarshal(_json, &res)
 
 		for k, v := range res {
-			if k == "id" || k == "created_by" || k == "updated_by" || k == "parent_id" {
+			if k == "id" || k == "created_by" || k == "updated_by" || k == "parent_id" || k == "user_id" {
 				res[k] = strconv.FormatInt(v.(int64), 10)
 			}
 		}

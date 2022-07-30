@@ -34,11 +34,12 @@ type Object struct {
 	URL string `json:"url,omitempty"`
 	// IsPublic holds the value of the "is_public" field.
 	IsPublic bool `json:"is_public"`
+	// UserID holds the value of the "user_id" field.
+	UserID int64 `json:"user_id"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ObjectQuery when eager-loading is set.
 	Edges             ObjectEdges `json:"edges"`
 	directory_objects *int64
-	user_objects      *int64
 }
 
 // ObjectEdges holds the relations/edges for other nodes in the graph.
@@ -87,15 +88,13 @@ func (*Object) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case object.FieldIsPublic:
 			values[i] = new(sql.NullBool)
-		case object.FieldID, object.FieldCreatedBy, object.FieldUpdatedBy:
+		case object.FieldID, object.FieldCreatedBy, object.FieldUpdatedBy, object.FieldUserID:
 			values[i] = new(sql.NullInt64)
 		case object.FieldName, object.FieldURL:
 			values[i] = new(sql.NullString)
 		case object.FieldCreatedAt, object.FieldUpdatedAt, object.FieldDeletedAt:
 			values[i] = new(sql.NullTime)
 		case object.ForeignKeys[0]: // directory_objects
-			values[i] = new(sql.NullInt64)
-		case object.ForeignKeys[1]: // user_objects
 			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Object", columns[i])
@@ -166,19 +165,18 @@ func (o *Object) assignValues(columns []string, values []interface{}) error {
 			} else if value.Valid {
 				o.IsPublic = value.Bool
 			}
+		case object.FieldUserID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field user_id", values[i])
+			} else if value.Valid {
+				o.UserID = value.Int64
+			}
 		case object.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field directory_objects", value)
 			} else if value.Valid {
 				o.directory_objects = new(int64)
 				*o.directory_objects = int64(value.Int64)
-			}
-		case object.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field user_objects", value)
-			} else if value.Valid {
-				o.user_objects = new(int64)
-				*o.user_objects = int64(value.Int64)
 			}
 		}
 	}
@@ -241,6 +239,9 @@ func (o *Object) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("is_public=")
 	builder.WriteString(fmt.Sprintf("%v", o.IsPublic))
+	builder.WriteString(", ")
+	builder.WriteString("user_id=")
+	builder.WriteString(fmt.Sprintf("%v", o.UserID))
 	builder.WriteByte(')')
 	return builder.String()
 }

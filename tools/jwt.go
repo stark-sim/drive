@@ -18,14 +18,14 @@ const (
 )
 
 type CustomClaims struct {
-	UserId int64
+	UserID int64
 	jwt.RegisteredClaims
 }
 
 // GetToken 生成 JWT
 func GetToken(CreateAt time.Time, UserID int64) (string, error) {
 	customClaims := &CustomClaims{
-		UserId: UserID,
+		UserID: UserID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    TokenIssuer,
 			ExpiresAt: &jwt.NumericDate{Time: CreateAt.Add(AccessTokenExp)},

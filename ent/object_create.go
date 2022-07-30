@@ -118,6 +118,12 @@ func (oc *ObjectCreate) SetNillableIsPublic(b *bool) *ObjectCreate {
 	return oc
 }
 
+// SetUserID sets the "user_id" field.
+func (oc *ObjectCreate) SetUserID(i int64) *ObjectCreate {
+	oc.mutation.SetUserID(i)
+	return oc
+}
+
 // SetID sets the "id" field.
 func (oc *ObjectCreate) SetID(i int64) *ObjectCreate {
 	oc.mutation.SetID(i)
@@ -128,20 +134,6 @@ func (oc *ObjectCreate) SetID(i int64) *ObjectCreate {
 func (oc *ObjectCreate) SetNillableID(i *int64) *ObjectCreate {
 	if i != nil {
 		oc.SetID(*i)
-	}
-	return oc
-}
-
-// SetUserID sets the "user" edge to the User entity by ID.
-func (oc *ObjectCreate) SetUserID(id int64) *ObjectCreate {
-	oc.mutation.SetUserID(id)
-	return oc
-}
-
-// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (oc *ObjectCreate) SetNillableUserID(id *int64) *ObjectCreate {
-	if id != nil {
-		oc = oc.SetUserID(*id)
 	}
 	return oc
 }
@@ -308,6 +300,12 @@ func (oc *ObjectCreate) check() error {
 	if _, ok := oc.mutation.IsPublic(); !ok {
 		return &ValidationError{Name: "is_public", err: errors.New(`ent: missing required field "Object.is_public"`)}
 	}
+	if _, ok := oc.mutation.UserID(); !ok {
+		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Object.user_id"`)}
+	}
+	if _, ok := oc.mutation.UserID(); !ok {
+		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Object.user"`)}
+	}
 	return nil
 }
 
@@ -422,7 +420,7 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_objects = &nodes[0]
+		_node.UserID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := oc.mutation.DirectoryIDs(); len(nodes) > 0 {

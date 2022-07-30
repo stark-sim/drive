@@ -1495,9 +1495,40 @@ func (m *ObjectMutation) ResetIsPublic() {
 	m.is_public = nil
 }
 
-// SetUserID sets the "user" edge to the User entity by id.
-func (m *ObjectMutation) SetUserID(id int64) {
-	m.user = &id
+// SetUserID sets the "user_id" field.
+func (m *ObjectMutation) SetUserID(i int64) {
+	m.user = &i
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *ObjectMutation) UserID() (r int64, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the Object entity.
+// If the Object object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ObjectMutation) OldUserID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *ObjectMutation) ResetUserID() {
+	m.user = nil
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -1508,14 +1539,6 @@ func (m *ObjectMutation) ClearUser() {
 // UserCleared reports if the "user" edge to the User entity was cleared.
 func (m *ObjectMutation) UserCleared() bool {
 	return m.cleareduser
-}
-
-// UserID returns the "user" edge ID in the mutation.
-func (m *ObjectMutation) UserID() (id int64, exists bool) {
-	if m.user != nil {
-		return *m.user, true
-	}
-	return
 }
 
 // UserIDs returns the "user" edge IDs in the mutation.
@@ -1592,7 +1615,7 @@ func (m *ObjectMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ObjectMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.created_by != nil {
 		fields = append(fields, object.FieldCreatedBy)
 	}
@@ -1616,6 +1639,9 @@ func (m *ObjectMutation) Fields() []string {
 	}
 	if m.is_public != nil {
 		fields = append(fields, object.FieldIsPublic)
+	}
+	if m.user != nil {
+		fields = append(fields, object.FieldUserID)
 	}
 	return fields
 }
@@ -1641,6 +1667,8 @@ func (m *ObjectMutation) Field(name string) (ent.Value, bool) {
 		return m.URL()
 	case object.FieldIsPublic:
 		return m.IsPublic()
+	case object.FieldUserID:
+		return m.UserID()
 	}
 	return nil, false
 }
@@ -1666,6 +1694,8 @@ func (m *ObjectMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldURL(ctx)
 	case object.FieldIsPublic:
 		return m.OldIsPublic(ctx)
+	case object.FieldUserID:
+		return m.OldUserID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Object field %s", name)
 }
@@ -1730,6 +1760,13 @@ func (m *ObjectMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetIsPublic(v)
+		return nil
+	case object.FieldUserID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Object field %s", name)
@@ -1830,6 +1867,9 @@ func (m *ObjectMutation) ResetField(name string) error {
 		return nil
 	case object.FieldIsPublic:
 		m.ResetIsPublic()
+		return nil
+	case object.FieldUserID:
+		m.ResetUserID()
 		return nil
 	}
 	return fmt.Errorf("unknown Object field %s", name)

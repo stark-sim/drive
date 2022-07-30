@@ -37,7 +37,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "object" package.
 	ObjectsInverseTable = "objects"
 	// ObjectsColumn is the table column denoting the objects relation/edge.
-	ObjectsColumn = "user_objects"
+	ObjectsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.

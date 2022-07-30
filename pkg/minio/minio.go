@@ -93,16 +93,13 @@ type UploadResult struct {
 func (c *Client) PutOneFile(ctx context.Context, index int, file io.Reader, objectName string, fileSize int64, responseChan chan *UploadResult, concurrentLimiter chan bool, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	_, err := c.client.PutObject(ctx, "drive", objectName, file, fileSize, defaultPutObjectOptions)
-	if err != nil {
-		logrus.Errorf("fail at uploading file: %v", err)
-
-		responseChan <- &UploadResult{
-			Index: 0,
-			Url:   "",
-			Err:   nil,
+	go func() {
+		_, err := c.client.PutObject(ctx, "drive", objectName, file, fileSize, defaultPutObjectOptions)
+		if err != nil {
+			logrus.Errorf("GoRoutine ERROR! minio putObject error: %v", err)
 		}
-	}
+	}()
+
 	responseChan <- &UploadResult{
 		Index: index,
 		Url:   fmt.Sprintf("http://%s/drive/%s", config.Conf.MinioConfig.Endpoint, objectName),

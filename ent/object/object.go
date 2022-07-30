@@ -27,6 +27,8 @@ const (
 	FieldURL = "url"
 	// FieldIsPublic holds the string denoting the is_public field in the database.
 	FieldIsPublic = "is_public"
+	// FieldUserID holds the string denoting the user_id field in the database.
+	FieldUserID = "user_id"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// EdgeDirectory holds the string denoting the directory edge name in mutations.
@@ -39,7 +41,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	UserInverseTable = "users"
 	// UserColumn is the table column denoting the user relation/edge.
-	UserColumn = "user_objects"
+	UserColumn = "user_id"
 	// DirectoryTable is the table that holds the directory relation/edge.
 	DirectoryTable = "objects"
 	// DirectoryInverseTable is the table name for the Directory entity.
@@ -60,13 +62,13 @@ var Columns = []string{
 	FieldName,
 	FieldURL,
 	FieldIsPublic,
+	FieldUserID,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "objects"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"directory_objects",
-	"user_objects",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

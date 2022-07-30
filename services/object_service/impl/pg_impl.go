@@ -37,6 +37,7 @@ func (p *pgImpl) Create(ctx context.Context, name string, url string, directoryI
 		SetUserID(userID).
 		SetCreatedBy(userID).
 		SetUpdatedBy(userID).
+		SetIsPublic(isPublic).
 		Save(ctx)
 	if err != nil {
 		return nil, err

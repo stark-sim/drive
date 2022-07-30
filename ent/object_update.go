@@ -118,17 +118,9 @@ func (ou *ObjectUpdate) SetNillableIsPublic(b *bool) *ObjectUpdate {
 	return ou
 }
 
-// SetUserID sets the "user" edge to the User entity by ID.
-func (ou *ObjectUpdate) SetUserID(id int64) *ObjectUpdate {
-	ou.mutation.SetUserID(id)
-	return ou
-}
-
-// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (ou *ObjectUpdate) SetNillableUserID(id *int64) *ObjectUpdate {
-	if id != nil {
-		ou = ou.SetUserID(*id)
-	}
+// SetUserID sets the "user_id" field.
+func (ou *ObjectUpdate) SetUserID(i int64) *ObjectUpdate {
+	ou.mutation.SetUserID(i)
 	return ou
 }
 
@@ -248,6 +240,9 @@ func (ou *ObjectUpdate) check() error {
 		if err := object.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Object.name": %w`, err)}
 		}
+	}
+	if _, ok := ou.mutation.UserID(); ou.mutation.UserCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Object.user"`)
 	}
 	return nil
 }
@@ -510,17 +505,9 @@ func (ouo *ObjectUpdateOne) SetNillableIsPublic(b *bool) *ObjectUpdateOne {
 	return ouo
 }
 
-// SetUserID sets the "user" edge to the User entity by ID.
-func (ouo *ObjectUpdateOne) SetUserID(id int64) *ObjectUpdateOne {
-	ouo.mutation.SetUserID(id)
-	return ouo
-}
-
-// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (ouo *ObjectUpdateOne) SetNillableUserID(id *int64) *ObjectUpdateOne {
-	if id != nil {
-		ouo = ouo.SetUserID(*id)
-	}
+// SetUserID sets the "user_id" field.
+func (ouo *ObjectUpdateOne) SetUserID(i int64) *ObjectUpdateOne {
+	ouo.mutation.SetUserID(i)
 	return ouo
 }
 
@@ -653,6 +640,9 @@ func (ouo *ObjectUpdateOne) check() error {
 		if err := object.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Object.name": %w`, err)}
 		}
+	}
+	if _, ok := ouo.mutation.UserID(); ouo.mutation.UserCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Object.user"`)
 	}
 	return nil
 }

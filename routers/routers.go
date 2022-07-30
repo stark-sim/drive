@@ -11,14 +11,13 @@ func Init() *gin.Engine {
 
 	r.POST("/temp", controllers.Temp)
 
-	r.POST("/cos", controllers.UploadFile)
-
 	r.POST("/register", controllers.UserAdd)
 	r.GET("/login", controllers.Login)
 
 	v1 := r.Group("/v1")
 
 	v1.Use(middleware.AuthMiddleware())
+	v1.POST("/cos", controllers.UploadFile)
 
 	usersR := v1.Group("/users")
 
@@ -36,6 +35,7 @@ func Init() *gin.Engine {
 
 	objectsR.POST("", controllers.ObjectCreate)
 	objectsR.DELETE("", controllers.ObjectDelete)
+	objectsR.PUT("", controllers.ObjectUpdate)
 
 	return r
 }

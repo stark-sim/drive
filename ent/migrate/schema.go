@@ -46,7 +46,7 @@ var (
 		{Name: "url", Type: field.TypeString},
 		{Name: "is_public", Type: field.TypeBool, Default: true},
 		{Name: "directory_objects", Type: field.TypeInt64, Nullable: true},
-		{Name: "user_objects", Type: field.TypeInt64, Nullable: true},
+		{Name: "user_id", Type: field.TypeInt64},
 	}
 	// ObjectsTable holds the schema information for the "objects" table.
 	ObjectsTable = &schema.Table{
@@ -64,7 +64,7 @@ var (
 				Symbol:     "objects_users_objects",
 				Columns:    []*schema.Column{ObjectsColumns[10]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}

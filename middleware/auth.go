@@ -35,7 +35,7 @@ func AuthMiddleware() func(c *gin.Context) {
 			c.Abort()
 			return
 		}
-		c.Set("userId", customClaims.UserId)
+		c.Set("userID", customClaims.UserID)
 
 		// 将 token 保存到上下文中，便于发送 GRPC 请求，由于 GRPC 请求 METADATA key 全小写，所以 Authorization 换成 token
 		c.Set(common.ContextTokenKey, fmt.Sprintf(CookieContext, cookie))
