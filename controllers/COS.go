@@ -23,3 +23,11 @@ func UploadFile(c *gin.Context) {
 
 	common.ResponseSuccess(c, results)
 }
+
+
+func ListFiles(c *gin.Context) {
+	minioClient := minio.NewMinioClient()
+	files := minioClient.ListFiles(c)
+
+	common.ResponseSuccess(c, files)
+}

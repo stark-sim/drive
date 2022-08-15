@@ -107,3 +107,21 @@ func (c *Client) PutOneFile(ctx context.Context, index int, file io.Reader, obje
 	}
 	<-concurrentLimiter
 }
+
+func (c *Client) ListFiles(ctx context.Context) []string {
+	objChan := c.client.ListObjects(ctx, "drive", minio.ListObjectsOptions{
+		WithVersions: false,
+		WithMetadata: false,
+		Prefix:       "",
+		Recursive:    false,
+		MaxKeys:      0,
+		StartAfter:   "",
+		UseV1:        false,
+	})
+
+	res := make([]string, 0)
+	for obj := range objChan {
+		res = append(res, obj.Key)
+	}
+	return res
+}

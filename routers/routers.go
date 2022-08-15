@@ -18,6 +18,7 @@ func Init() *gin.Engine {
 
 	v1.Use(middleware.AuthMiddleware())
 	v1.POST("/cos", controllers.UploadFile)
+	v1.GET("/cos", controllers.ListFiles)
 
 	usersR := v1.Group("/users")
 
