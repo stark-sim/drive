@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.18-alpine AS builder
 
 LABEL maintainer="StarkSim<gooda159753@163.com>"
 
@@ -6,7 +6,7 @@ LABEL maintainer="StarkSim<gooda159753@163.com>"
 WORKDIR /src
 
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
-RUN apk add g++ make
+RUN apk add --no-cache g++
 
 COPY ./go.mod .
 
@@ -18,7 +18,9 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLE=1 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o apiserver ./
+ARG TARGETOS TARGETARCH
+
+RUN CGO_ENABLE=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w" -o apiserver ./
 
 FROM alpine:latest
 

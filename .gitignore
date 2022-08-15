@@ -30,3 +30,6 @@ vendor/
 
 # config
 config.yaml
+
+# temp
+temp/
