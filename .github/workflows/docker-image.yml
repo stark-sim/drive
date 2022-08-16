@@ -18,4 +18,4 @@ jobs:
       run: |
         docker login -u starksim -p ${{ secrets.DOCKER_HUB_SECRET }}
         docker buildx create --use
-        docker buildx build . --platform=linux/amd64,linux/arm64 --file Dockerfile --push --tag starksim/drive_backend:$(date +%s)
+        docker buildx build . --platform=linux/amd64,linux/arm64 --file Dockerfile --push --tag starksim/drive_backend:latest
