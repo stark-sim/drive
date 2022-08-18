@@ -9,12 +9,14 @@ import (
 func Init() *gin.Engine {
 	r := gin.Default()
 
-	r.POST("/temp", controllers.Temp)
+	driveAPI := r.Group("/drive/api")
 
-	r.POST("/register", controllers.UserAdd)
-	r.GET("/login", controllers.Login)
+	driveAPI.POST("/temp", controllers.Temp)
 
-	v1 := r.Group("/v1")
+	driveAPI.POST("/register", controllers.UserAdd)
+	driveAPI.GET("/login", controllers.Login)
+
+	v1 := driveAPI.Group("/v1")
 
 	v1.Use(middleware.AuthMiddleware())
 	v1.POST("/cos", controllers.UploadFile)
