@@ -37,7 +37,8 @@ type DBConfig struct {
 }
 
 type MinioConfig struct {
-	Endpoint  string
+	Host      string
+	Port      int
 	AccessKey string
 	SecretKey string
 }

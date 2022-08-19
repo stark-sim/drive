@@ -21,10 +21,12 @@ type Client struct {
 
 func NewMinioClient() *Client {
 
-	minioClient, err := minio.New(config.Conf.MinioConfig.Endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(config.Conf.MinioConfig.AccessKey, config.Conf.SecretKey, ""),
-		Secure: false,
-	})
+	minioClient, err := minio.New(
+		fmt.Sprintf("%s:%d", config.Conf.MinioConfig.Host, config.Conf.MinioConfig.Port),
+		&minio.Options{
+			Creds:  credentials.NewStaticV4(config.Conf.MinioConfig.AccessKey, config.Conf.SecretKey, ""),
+			Secure: false,
+		})
 	if err != nil {
 		logrus.Errorf("fail creating minioClient: %v", err)
 		return nil
