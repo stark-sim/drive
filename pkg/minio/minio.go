@@ -46,8 +46,10 @@ func (c *Client) UploadFiles(ctx context.Context, files []*multipart.FileHeader)
 
 	wgResponseChan := &sync.WaitGroup{}
 	responseChan := make(chan *UploadResult, 5)
+
+	// 必须在协程外部改动，内部改动有可能没有作用到同一个 wgResponseChan
+	wgResponseChan.Add(1)
 	go func() {
-		wgResponseChan.Add(1)
 		for response := range responseChan {
 			res = append(res, response)
 		}
