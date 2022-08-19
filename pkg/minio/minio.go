@@ -104,7 +104,7 @@ func (c *Client) PutOneFile(ctx context.Context, index int, file io.Reader, obje
 
 	responseChan <- &UploadResult{
 		Index: index,
-		Url:   fmt.Sprintf("http://%s/drive/%s", config.Conf.MinioConfig.Endpoint, objectName),
+		Url:   fmt.Sprintf("http://%s/drive/%s", fmt.Sprintf("%s:%d", config.Conf.MinioConfig.Host, config.Conf.MinioConfig.Port), objectName),
 		Err:   nil,
 	}
 	<-concurrentLimiter
