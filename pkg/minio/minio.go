@@ -22,7 +22,7 @@ type Client struct {
 func NewMinioClient() *Client {
 
 	minioClient, err := minio.New(
-		fmt.Sprintf("%s:%d", config.Conf.MinioConfig.Host, config.Conf.MinioConfig.Port),
+		config.Conf.MinioConfig.Endpoint,
 		&minio.Options{
 			Creds:  credentials.NewStaticV4(config.Conf.MinioConfig.AccessKey, config.Conf.SecretKey, ""),
 			Secure: false,
@@ -104,7 +104,7 @@ func (c *Client) PutOneFile(ctx context.Context, index int, file io.Reader, obje
 
 	responseChan <- &UploadResult{
 		Index: index,
-		Url:   fmt.Sprintf("http://%s/drive/%s", fmt.Sprintf("%s:%d", config.Conf.MinioConfig.Host, config.Conf.MinioConfig.Port), objectName),
+		Url:   fmt.Sprintf("http://%s/drive/%s", config.Conf.MinioConfig.Endpoint, objectName),
 		Err:   nil,
 	}
 	<-concurrentLimiter
