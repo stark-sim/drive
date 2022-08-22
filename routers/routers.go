@@ -10,6 +10,7 @@ func Init() *gin.Engine {
 	r := gin.Default()
 
 	driveAPI := r.Group("/drive/api")
+	driveAPI.Use(middleware.CorsMiddleware())
 
 	driveAPI.POST("/temp", controllers.Temp)
 
