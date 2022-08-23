@@ -100,6 +100,7 @@ func Login(c *gin.Context) {
 	}
 
 	// 设置cookie
+	// Allow cross site dev
 	c.SetSameSite(http.SameSiteNoneMode)
 	c.SetCookie(common.CookieName, url.PathEscape(token), common.CookieExpireTime, "/", "", false, true)
 
