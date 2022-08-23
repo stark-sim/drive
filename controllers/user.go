@@ -100,7 +100,7 @@ func Login(c *gin.Context) {
 	}
 
 	// 设置cookie
-	c.SetCookie(common.CookieName, url.PathEscape(token), common.CookieExpireTime, "/", "", false, true)
+	c.SetCookie(common.CookieName, url.PathEscape(token), common.CookieExpireTime, "/", "", false, false)
 
 	common.ResponseSuccess(c, token)
 }
