@@ -8,17 +8,18 @@ import (
 
 func Init() *gin.Engine {
 	r := gin.Default()
+	// 全体接口上缓存
+	r.Use(middleware.CacheMiddleware())
 
 	driveAPI := r.Group("/drive/api")
 	driveAPI.Use(middleware.CorsMiddleware())
 
 	driveAPI.POST("/temp", controllers.Temp)
-
 	driveAPI.POST("/register", controllers.UserAdd)
 	driveAPI.GET("/login", controllers.Login)
 
 	v1 := driveAPI.Group("/v1")
-
+	// v1 接口上认证
 	v1.Use(middleware.AuthMiddleware())
 	v1.POST("/cos", controllers.UploadFile)
 	v1.GET("/cos", controllers.ListFiles)
