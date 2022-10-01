@@ -16,6 +16,7 @@ type UpdateDirectoryReq struct {
 }
 
 type GetDirectoryReq struct {
+	PageReq PageReq `form:"page_req"`
 	ID       int64 `form:"id"`
 	ParentID int64 `form:"parent_id"`
 }

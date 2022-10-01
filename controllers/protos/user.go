@@ -8,6 +8,7 @@ type UserAddReq struct {
 }
 
 type UserGetReq struct {
+	PageReq PageReq `form:"page_req"`
 	Id int64 `form:"id"`
 }
 
