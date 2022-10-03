@@ -1,6 +1,5 @@
 package routers
 
-import "C"
 import (
 	"drive/controllers"
 	"drive/middleware"
@@ -12,8 +11,6 @@ func Init() *gin.Engine {
 
 	driveAPI := r.Group("/drive/api")
 	driveAPI.Use(middleware.CorsMiddleware())
-
-	cacheMiddleware := middleware.CacheMiddleware()
 
 	driveAPI.POST("/temp", controllers.Temp)
 	driveAPI.POST("/register", controllers.UserAdd)
@@ -28,12 +25,12 @@ func Init() *gin.Engine {
 	usersR := v1.Group("/users")
 
 	// 部分接口上缓存
-	usersR.GET("", controllers.UserGet, cacheMiddleware)
+	usersR.GET("", controllers.UserGet, middleware.CacheMiddleware())
 	usersR.DELETE("", controllers.UserDelete)
 
 	directoriesR := v1.Group("/directories")
 
-	directoriesR.GET("", controllers.DirectoryGet, cacheMiddleware)
+	directoriesR.GET("", controllers.DirectoryGet, middleware.CacheMiddleware())
 	directoriesR.POST("", controllers.DirectoryCreate)
 	directoriesR.PUT("", controllers.DirectoryUpdate)
 	directoriesR.DELETE("", controllers.DirectoryDelete)
