@@ -13,6 +13,8 @@ func Init() *gin.Engine {
 	driveAPI := r.Group("/drive/api")
 	driveAPI.Use(middleware.CorsMiddleware())
 
+	cacheMiddleware := middleware.CacheMiddleware()
+
 	driveAPI.POST("/temp", controllers.Temp)
 	driveAPI.POST("/register", controllers.UserAdd)
 	driveAPI.GET("/login", controllers.Login)
@@ -26,12 +28,12 @@ func Init() *gin.Engine {
 	usersR := v1.Group("/users")
 
 	// 部分接口上缓存
-	usersR.GET("", controllers.UserGet, middleware.CacheMiddleware())
+	usersR.GET("", controllers.UserGet, cacheMiddleware)
 	usersR.DELETE("", controllers.UserDelete)
 
 	directoriesR := v1.Group("/directories")
 
-	directoriesR.GET("", controllers.DirectoryGet, middleware.CacheMiddleware())
+	directoriesR.GET("", controllers.DirectoryGet, cacheMiddleware)
 	directoriesR.POST("", controllers.DirectoryCreate)
 	directoriesR.PUT("", controllers.DirectoryUpdate)
 	directoriesR.DELETE("", controllers.DirectoryDelete)
