@@ -44,6 +44,10 @@ type UserEdges struct {
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
+	// totalCount holds the count of the edges above.
+	totalCount [1]map[string]int
+
+	namedObjects map[string][]*Object
 }
 
 // ObjectsOrErr returns the Objects value or an error if the edge
@@ -192,6 +196,30 @@ func (u *User) String() string {
 	builder.WriteString(u.Phone)
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedObjects returns the Objects named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedObjects(name string) ([]*Object, error) {
+	if u.Edges.namedObjects == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedObjects[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedObjects(name string, edges ...*Object) {
+	if u.Edges.namedObjects == nil {
+		u.Edges.namedObjects = make(map[string][]*Object)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedObjects[name] = []*Object{}
+	} else {
+		u.Edges.namedObjects[name] = append(u.Edges.namedObjects[name], edges...)
+	}
 }
 
 // Users is a parsable slice of User.

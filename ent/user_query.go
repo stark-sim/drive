@@ -19,13 +19,16 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	limit       *int
-	offset      *int
-	unique      *bool
-	order       []OrderFunc
-	fields      []string
-	predicates  []predicate.User
-	withObjects *ObjectQuery
+	limit            *int
+	offset           *int
+	unique           *bool
+	order            []OrderFunc
+	fields           []string
+	predicates       []predicate.User
+	withObjects      *ObjectQuery
+	modifiers        []func(*sql.Selector)
+	loadTotal        []func(context.Context, []*User) error
+	withNamedObjects map[string]*ObjectQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -370,6 +373,9 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(uq.modifiers) > 0 {
+		_spec.Modifiers = uq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -383,6 +389,18 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := uq.loadObjects(ctx, query, nodes,
 			func(n *User) { n.Edges.Objects = []*Object{} },
 			func(n *User, e *Object) { n.Edges.Objects = append(n.Edges.Objects, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range uq.withNamedObjects {
+		if err := uq.loadObjects(ctx, query, nodes,
+			func(n *User) { n.appendNamedObjects(name) },
+			func(n *User, e *Object) { n.appendNamedObjects(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for i := range uq.loadTotal {
+		if err := uq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -420,6 +438,9 @@ func (uq *UserQuery) loadObjects(ctx context.Context, query *ObjectQuery, nodes 
 
 func (uq *UserQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := uq.querySpec()
+	if len(uq.modifiers) > 0 {
+		_spec.Modifiers = uq.modifiers
+	}
 	_spec.Node.Columns = uq.fields
 	if len(uq.fields) > 0 {
 		_spec.Unique = uq.unique != nil && *uq.unique
@@ -516,6 +537,20 @@ func (uq *UserQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// WithNamedObjects tells the query-builder to eager-load the nodes that are connected to the "objects"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithNamedObjects(name string, opts ...func(*ObjectQuery)) *UserQuery {
+	query := &ObjectQuery{config: uq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	if uq.withNamedObjects == nil {
+		uq.withNamedObjects = make(map[string]*ObjectQuery)
+	}
+	uq.withNamedObjects[name] = query
+	return uq
 }
 
 // UserGroupBy is the group-by builder for User entities.

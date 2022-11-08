@@ -19,15 +19,19 @@ import (
 // DirectoryQuery is the builder for querying Directory entities.
 type DirectoryQuery struct {
 	config
-	limit        *int
-	offset       *int
-	unique       *bool
-	order        []OrderFunc
-	fields       []string
-	predicates   []predicate.Directory
-	withObjects  *ObjectQuery
-	withParent   *DirectoryQuery
-	withChildren *DirectoryQuery
+	limit             *int
+	offset            *int
+	unique            *bool
+	order             []OrderFunc
+	fields            []string
+	predicates        []predicate.Directory
+	withObjects       *ObjectQuery
+	withParent        *DirectoryQuery
+	withChildren      *DirectoryQuery
+	modifiers         []func(*sql.Selector)
+	loadTotal         []func(context.Context, []*Directory) error
+	withNamedObjects  map[string]*ObjectQuery
+	withNamedChildren map[string]*DirectoryQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -442,6 +446,9 @@ func (dq *DirectoryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Di
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(dq.modifiers) > 0 {
+		_spec.Modifiers = dq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -468,6 +475,25 @@ func (dq *DirectoryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Di
 		if err := dq.loadChildren(ctx, query, nodes,
 			func(n *Directory) { n.Edges.Children = []*Directory{} },
 			func(n *Directory, e *Directory) { n.Edges.Children = append(n.Edges.Children, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range dq.withNamedObjects {
+		if err := dq.loadObjects(ctx, query, nodes,
+			func(n *Directory) { n.appendNamedObjects(name) },
+			func(n *Directory, e *Object) { n.appendNamedObjects(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range dq.withNamedChildren {
+		if err := dq.loadChildren(ctx, query, nodes,
+			func(n *Directory) { n.appendNamedChildren(name) },
+			func(n *Directory, e *Directory) { n.appendNamedChildren(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for i := range dq.loadTotal {
+		if err := dq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -561,6 +587,9 @@ func (dq *DirectoryQuery) loadChildren(ctx context.Context, query *DirectoryQuer
 
 func (dq *DirectoryQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := dq.querySpec()
+	if len(dq.modifiers) > 0 {
+		_spec.Modifiers = dq.modifiers
+	}
 	_spec.Node.Columns = dq.fields
 	if len(dq.fields) > 0 {
 		_spec.Unique = dq.unique != nil && *dq.unique
@@ -657,6 +686,34 @@ func (dq *DirectoryQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// WithNamedObjects tells the query-builder to eager-load the nodes that are connected to the "objects"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (dq *DirectoryQuery) WithNamedObjects(name string, opts ...func(*ObjectQuery)) *DirectoryQuery {
+	query := &ObjectQuery{config: dq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	if dq.withNamedObjects == nil {
+		dq.withNamedObjects = make(map[string]*ObjectQuery)
+	}
+	dq.withNamedObjects[name] = query
+	return dq
+}
+
+// WithNamedChildren tells the query-builder to eager-load the nodes that are connected to the "children"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (dq *DirectoryQuery) WithNamedChildren(name string, opts ...func(*DirectoryQuery)) *DirectoryQuery {
+	query := &DirectoryQuery{config: dq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	if dq.withNamedChildren == nil {
+		dq.withNamedChildren = make(map[string]*DirectoryQuery)
+	}
+	dq.withNamedChildren[name] = query
+	return dq
 }
 
 // DirectoryGroupBy is the group-by builder for Directory entities.

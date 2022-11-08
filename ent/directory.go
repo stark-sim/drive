@@ -48,6 +48,11 @@ type DirectoryEdges struct {
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [3]bool
+	// totalCount holds the count of the edges above.
+	totalCount [3]map[string]int
+
+	namedObjects  map[string][]*Object
+	namedChildren map[string][]*Directory
 }
 
 // ObjectsOrErr returns the Objects value or an error if the edge
@@ -231,6 +236,54 @@ func (d *Directory) String() string {
 	builder.WriteString(fmt.Sprintf("%v", d.ParentID))
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedObjects returns the Objects named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (d *Directory) NamedObjects(name string) ([]*Object, error) {
+	if d.Edges.namedObjects == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := d.Edges.namedObjects[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (d *Directory) appendNamedObjects(name string, edges ...*Object) {
+	if d.Edges.namedObjects == nil {
+		d.Edges.namedObjects = make(map[string][]*Object)
+	}
+	if len(edges) == 0 {
+		d.Edges.namedObjects[name] = []*Object{}
+	} else {
+		d.Edges.namedObjects[name] = append(d.Edges.namedObjects[name], edges...)
+	}
+}
+
+// NamedChildren returns the Children named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (d *Directory) NamedChildren(name string) ([]*Directory, error) {
+	if d.Edges.namedChildren == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := d.Edges.namedChildren[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (d *Directory) appendNamedChildren(name string, edges ...*Directory) {
+	if d.Edges.namedChildren == nil {
+		d.Edges.namedChildren = make(map[string][]*Directory)
+	}
+	if len(edges) == 0 {
+		d.Edges.namedChildren[name] = []*Directory{}
+	} else {
+		d.Edges.namedChildren[name] = append(d.Edges.namedChildren[name], edges...)
+	}
 }
 
 // Directories is a parsable slice of Directory.

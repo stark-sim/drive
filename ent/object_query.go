@@ -28,6 +28,8 @@ type ObjectQuery struct {
 	withUser      *UserQuery
 	withDirectory *DirectoryQuery
 	withFKs       bool
+	modifiers     []func(*sql.Selector)
+	loadTotal     []func(context.Context, []*Object) error
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -414,6 +416,9 @@ func (oq *ObjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Objec
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(oq.modifiers) > 0 {
+		_spec.Modifiers = oq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -432,6 +437,11 @@ func (oq *ObjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Objec
 	if query := oq.withDirectory; query != nil {
 		if err := oq.loadDirectory(ctx, query, nodes, nil,
 			func(n *Object, e *Directory) { n.Edges.Directory = e }); err != nil {
+			return nil, err
+		}
+	}
+	for i := range oq.loadTotal {
+		if err := oq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -496,6 +506,9 @@ func (oq *ObjectQuery) loadDirectory(ctx context.Context, query *DirectoryQuery,
 
 func (oq *ObjectQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := oq.querySpec()
+	if len(oq.modifiers) > 0 {
+		_spec.Modifiers = oq.modifiers
+	}
 	_spec.Node.Columns = oq.fields
 	if len(oq.fields) > 0 {
 		_spec.Unique = oq.unique != nil && *oq.unique
