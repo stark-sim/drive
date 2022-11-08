@@ -340,67 +340,35 @@ func (oc *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 		_spec.ID.Value = id
 	}
 	if value, ok := oc.mutation.CreatedBy(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: object.FieldCreatedBy,
-		})
+		_spec.SetField(object.FieldCreatedBy, field.TypeInt64, value)
 		_node.CreatedBy = value
 	}
 	if value, ok := oc.mutation.UpdatedBy(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: object.FieldUpdatedBy,
-		})
+		_spec.SetField(object.FieldUpdatedBy, field.TypeInt64, value)
 		_node.UpdatedBy = value
 	}
 	if value, ok := oc.mutation.CreatedAt(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: object.FieldCreatedAt,
-		})
+		_spec.SetField(object.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
 	if value, ok := oc.mutation.UpdatedAt(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: object.FieldUpdatedAt,
-		})
+		_spec.SetField(object.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
 	if value, ok := oc.mutation.DeletedAt(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: object.FieldDeletedAt,
-		})
+		_spec.SetField(object.FieldDeletedAt, field.TypeTime, value)
 		_node.DeletedAt = value
 	}
 	if value, ok := oc.mutation.Name(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: object.FieldName,
-		})
+		_spec.SetField(object.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
 	if value, ok := oc.mutation.URL(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: object.FieldURL,
-		})
+		_spec.SetField(object.FieldURL, field.TypeString, value)
 		_node.URL = value
 	}
 	if value, ok := oc.mutation.IsPublic(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: object.FieldIsPublic,
-		})
+		_spec.SetField(object.FieldIsPublic, field.TypeBool, value)
 		_node.IsPublic = value
 	}
 	if nodes := oc.mutation.UserIDs(); len(nodes) > 0 {

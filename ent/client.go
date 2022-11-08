@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -67,7 +68,7 @@ func Open(driverName, dataSourceName string, options ...Option) (*Client, error)
 // is used until the transaction is committed or rolled back.
 func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	if _, ok := c.driver.(*txDriver); ok {
-		return nil, fmt.Errorf("ent: cannot start a transaction within a transaction")
+		return nil, errors.New("ent: cannot start a transaction within a transaction")
 	}
 	tx, err := newTx(ctx, c.driver)
 	if err != nil {
@@ -87,7 +88,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 // BeginTx returns a transactional client with specified options.
 func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) {
 	if _, ok := c.driver.(*txDriver); ok {
-		return nil, fmt.Errorf("ent: cannot start a transaction within a transaction")
+		return nil, errors.New("ent: cannot start a transaction within a transaction")
 	}
 	tx, err := c.driver.(interface {
 		BeginTx(context.Context, *sql.TxOptions) (dialect.Tx, error)
@@ -112,7 +113,6 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 //		Directory.
 //		Query().
 //		Count(ctx)
-//
 func (c *Client) Debug() *Client {
 	if c.debug {
 		return c
@@ -193,7 +193,7 @@ func (c *DirectoryClient) DeleteOne(d *Directory) *DirectoryDeleteOne {
 	return c.DeleteOneID(d.ID)
 }
 
-// DeleteOne returns a builder for deleting the given entity by its id.
+// DeleteOneID returns a builder for deleting the given entity by its id.
 func (c *DirectoryClient) DeleteOneID(id int64) *DirectoryDeleteOne {
 	builder := c.Delete().Where(directory.ID(id))
 	builder.mutation.id = &id
@@ -225,7 +225,7 @@ func (c *DirectoryClient) GetX(ctx context.Context, id int64) *Directory {
 // QueryObjects queries the objects edge of a Directory.
 func (c *DirectoryClient) QueryObjects(d *Directory) *ObjectQuery {
 	query := &ObjectQuery{config: c.config}
-	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := d.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(directory.Table, directory.FieldID, id),
@@ -241,7 +241,7 @@ func (c *DirectoryClient) QueryObjects(d *Directory) *ObjectQuery {
 // QueryParent queries the parent edge of a Directory.
 func (c *DirectoryClient) QueryParent(d *Directory) *DirectoryQuery {
 	query := &DirectoryQuery{config: c.config}
-	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := d.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(directory.Table, directory.FieldID, id),
@@ -257,7 +257,7 @@ func (c *DirectoryClient) QueryParent(d *Directory) *DirectoryQuery {
 // QueryChildren queries the children edge of a Directory.
 func (c *DirectoryClient) QueryChildren(d *Directory) *DirectoryQuery {
 	query := &DirectoryQuery{config: c.config}
-	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := d.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(directory.Table, directory.FieldID, id),
@@ -331,7 +331,7 @@ func (c *ObjectClient) DeleteOne(o *Object) *ObjectDeleteOne {
 	return c.DeleteOneID(o.ID)
 }
 
-// DeleteOne returns a builder for deleting the given entity by its id.
+// DeleteOneID returns a builder for deleting the given entity by its id.
 func (c *ObjectClient) DeleteOneID(id int64) *ObjectDeleteOne {
 	builder := c.Delete().Where(object.ID(id))
 	builder.mutation.id = &id
@@ -363,7 +363,7 @@ func (c *ObjectClient) GetX(ctx context.Context, id int64) *Object {
 // QueryUser queries the user edge of a Object.
 func (c *ObjectClient) QueryUser(o *Object) *UserQuery {
 	query := &UserQuery{config: c.config}
-	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := o.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(object.Table, object.FieldID, id),
@@ -379,7 +379,7 @@ func (c *ObjectClient) QueryUser(o *Object) *UserQuery {
 // QueryDirectory queries the directory edge of a Object.
 func (c *ObjectClient) QueryDirectory(o *Object) *DirectoryQuery {
 	query := &DirectoryQuery{config: c.config}
-	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := o.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(object.Table, object.FieldID, id),
@@ -453,7 +453,7 @@ func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
 	return c.DeleteOneID(u.ID)
 }
 
-// DeleteOne returns a builder for deleting the given entity by its id.
+// DeleteOneID returns a builder for deleting the given entity by its id.
 func (c *UserClient) DeleteOneID(id int64) *UserDeleteOne {
 	builder := c.Delete().Where(user.ID(id))
 	builder.mutation.id = &id
@@ -485,7 +485,7 @@ func (c *UserClient) GetX(ctx context.Context, id int64) *User {
 // QueryObjects queries the objects edge of a User.
 func (c *UserClient) QueryObjects(u *User) *ObjectQuery {
 	query := &ObjectQuery{config: c.config}
-	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := u.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),

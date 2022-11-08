@@ -301,60 +301,28 @@ func (du *DirectoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 	}
 	if value, ok := du.mutation.CreatedBy(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: directory.FieldCreatedBy,
-		})
+		_spec.SetField(directory.FieldCreatedBy, field.TypeInt64, value)
 	}
 	if value, ok := du.mutation.AddedCreatedBy(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: directory.FieldCreatedBy,
-		})
+		_spec.AddField(directory.FieldCreatedBy, field.TypeInt64, value)
 	}
 	if value, ok := du.mutation.UpdatedBy(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: directory.FieldUpdatedBy,
-		})
+		_spec.SetField(directory.FieldUpdatedBy, field.TypeInt64, value)
 	}
 	if value, ok := du.mutation.AddedUpdatedBy(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: directory.FieldUpdatedBy,
-		})
+		_spec.AddField(directory.FieldUpdatedBy, field.TypeInt64, value)
 	}
 	if value, ok := du.mutation.UpdatedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: directory.FieldUpdatedAt,
-		})
+		_spec.SetField(directory.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := du.mutation.DeletedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: directory.FieldDeletedAt,
-		})
+		_spec.SetField(directory.FieldDeletedAt, field.TypeTime, value)
 	}
 	if value, ok := du.mutation.Name(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: directory.FieldName,
-		})
+		_spec.SetField(directory.FieldName, field.TypeString, value)
 	}
 	if value, ok := du.mutation.IsPublic(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: directory.FieldIsPublic,
-		})
+		_spec.SetField(directory.FieldIsPublic, field.TypeBool, value)
 	}
 	if du.mutation.ObjectsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -820,60 +788,28 @@ func (duo *DirectoryUpdateOne) sqlSave(ctx context.Context) (_node *Directory, e
 		}
 	}
 	if value, ok := duo.mutation.CreatedBy(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: directory.FieldCreatedBy,
-		})
+		_spec.SetField(directory.FieldCreatedBy, field.TypeInt64, value)
 	}
 	if value, ok := duo.mutation.AddedCreatedBy(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: directory.FieldCreatedBy,
-		})
+		_spec.AddField(directory.FieldCreatedBy, field.TypeInt64, value)
 	}
 	if value, ok := duo.mutation.UpdatedBy(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: directory.FieldUpdatedBy,
-		})
+		_spec.SetField(directory.FieldUpdatedBy, field.TypeInt64, value)
 	}
 	if value, ok := duo.mutation.AddedUpdatedBy(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: directory.FieldUpdatedBy,
-		})
+		_spec.AddField(directory.FieldUpdatedBy, field.TypeInt64, value)
 	}
 	if value, ok := duo.mutation.UpdatedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: directory.FieldUpdatedAt,
-		})
+		_spec.SetField(directory.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := duo.mutation.DeletedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: directory.FieldDeletedAt,
-		})
+		_spec.SetField(directory.FieldDeletedAt, field.TypeTime, value)
 	}
 	if value, ok := duo.mutation.Name(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: directory.FieldName,
-		})
+		_spec.SetField(directory.FieldName, field.TypeString, value)
 	}
 	if value, ok := duo.mutation.IsPublic(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: directory.FieldIsPublic,
-		})
+		_spec.SetField(directory.FieldIsPublic, field.TypeBool, value)
 	}
 	if duo.mutation.ObjectsCleared() {
 		edge := &sqlgraph.EdgeSpec{

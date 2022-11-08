@@ -338,59 +338,31 @@ func (dc *DirectoryCreate) createSpec() (*Directory, *sqlgraph.CreateSpec) {
 		_spec.ID.Value = id
 	}
 	if value, ok := dc.mutation.CreatedBy(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: directory.FieldCreatedBy,
-		})
+		_spec.SetField(directory.FieldCreatedBy, field.TypeInt64, value)
 		_node.CreatedBy = value
 	}
 	if value, ok := dc.mutation.UpdatedBy(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: directory.FieldUpdatedBy,
-		})
+		_spec.SetField(directory.FieldUpdatedBy, field.TypeInt64, value)
 		_node.UpdatedBy = value
 	}
 	if value, ok := dc.mutation.CreatedAt(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: directory.FieldCreatedAt,
-		})
+		_spec.SetField(directory.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
 	if value, ok := dc.mutation.UpdatedAt(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: directory.FieldUpdatedAt,
-		})
+		_spec.SetField(directory.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
 	if value, ok := dc.mutation.DeletedAt(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: directory.FieldDeletedAt,
-		})
+		_spec.SetField(directory.FieldDeletedAt, field.TypeTime, value)
 		_node.DeletedAt = value
 	}
 	if value, ok := dc.mutation.Name(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: directory.FieldName,
-		})
+		_spec.SetField(directory.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
 	if value, ok := dc.mutation.IsPublic(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: directory.FieldIsPublic,
-		})
+		_spec.SetField(directory.FieldIsPublic, field.TypeBool, value)
 		_node.IsPublic = value
 	}
 	if nodes := dc.mutation.ObjectsIDs(); len(nodes) > 0 {

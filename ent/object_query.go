@@ -19,13 +19,12 @@ import (
 // ObjectQuery is the builder for querying Object entities.
 type ObjectQuery struct {
 	config
-	limit      *int
-	offset     *int
-	unique     *bool
-	order      []OrderFunc
-	fields     []string
-	predicates []predicate.Object
-	// eager-loading edges.
+	limit         *int
+	offset        *int
+	unique        *bool
+	order         []OrderFunc
+	fields        []string
+	predicates    []predicate.Object
 	withUser      *UserQuery
 	withDirectory *DirectoryQuery
 	withFKs       bool
@@ -335,7 +334,6 @@ func (oq *ObjectQuery) WithDirectory(opts ...func(*DirectoryQuery)) *ObjectQuery
 //		GroupBy(object.FieldCreatedBy).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-//
 func (oq *ObjectQuery) GroupBy(field string, fields ...string) *ObjectGroupBy {
 	grbuild := &ObjectGroupBy{config: oq.config}
 	grbuild.fields = append([]string{field}, fields...)
@@ -362,13 +360,17 @@ func (oq *ObjectQuery) GroupBy(field string, fields ...string) *ObjectGroupBy {
 //	client.Object.Query().
 //		Select(object.FieldCreatedBy).
 //		Scan(ctx, &v)
-//
 func (oq *ObjectQuery) Select(fields ...string) *ObjectSelect {
 	oq.fields = append(oq.fields, fields...)
 	selbuild := &ObjectSelect{ObjectQuery: oq}
 	selbuild.label = object.Label
 	selbuild.flds, selbuild.scan = &oq.fields, selbuild.Scan
 	return selbuild
+}
+
+// Aggregate returns a ObjectSelect configured with the given aggregations.
+func (oq *ObjectQuery) Aggregate(fns ...AggregateFunc) *ObjectSelect {
+	return oq.Select().Aggregate(fns...)
 }
 
 func (oq *ObjectQuery) prepareQuery(ctx context.Context) error {
@@ -403,10 +405,10 @@ func (oq *ObjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Objec
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, object.ForeignKeys...)
 	}
-	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
+	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Object).scanValues(nil, columns)
 	}
-	_spec.Assign = func(columns []string, values []interface{}) error {
+	_spec.Assign = func(columns []string, values []any) error {
 		node := &Object{config: oq.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
@@ -421,63 +423,75 @@ func (oq *ObjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Objec
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-
 	if query := oq.withUser; query != nil {
-		ids := make([]int64, 0, len(nodes))
-		nodeids := make(map[int64][]*Object)
-		for i := range nodes {
-			fk := nodes[i].UserID
-			if _, ok := nodeids[fk]; !ok {
-				ids = append(ids, fk)
-			}
-			nodeids[fk] = append(nodeids[fk], nodes[i])
-		}
-		query.Where(user.IDIn(ids...))
-		neighbors, err := query.All(ctx)
-		if err != nil {
+		if err := oq.loadUser(ctx, query, nodes, nil,
+			func(n *Object, e *User) { n.Edges.User = e }); err != nil {
 			return nil, err
 		}
-		for _, n := range neighbors {
-			nodes, ok := nodeids[n.ID]
-			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
-			}
-			for i := range nodes {
-				nodes[i].Edges.User = n
-			}
-		}
 	}
-
 	if query := oq.withDirectory; query != nil {
-		ids := make([]int64, 0, len(nodes))
-		nodeids := make(map[int64][]*Object)
-		for i := range nodes {
-			if nodes[i].directory_objects == nil {
-				continue
-			}
-			fk := *nodes[i].directory_objects
-			if _, ok := nodeids[fk]; !ok {
-				ids = append(ids, fk)
-			}
-			nodeids[fk] = append(nodeids[fk], nodes[i])
-		}
-		query.Where(directory.IDIn(ids...))
-		neighbors, err := query.All(ctx)
-		if err != nil {
+		if err := oq.loadDirectory(ctx, query, nodes, nil,
+			func(n *Object, e *Directory) { n.Edges.Directory = e }); err != nil {
 			return nil, err
 		}
-		for _, n := range neighbors {
-			nodes, ok := nodeids[n.ID]
-			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "directory_objects" returned %v`, n.ID)
-			}
-			for i := range nodes {
-				nodes[i].Edges.Directory = n
-			}
+	}
+	return nodes, nil
+}
+
+func (oq *ObjectQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Object, init func(*Object), assign func(*Object, *User)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Object)
+	for i := range nodes {
+		fk := nodes[i].UserID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
 		}
 	}
-
-	return nodes, nil
+	return nil
+}
+func (oq *ObjectQuery) loadDirectory(ctx context.Context, query *DirectoryQuery, nodes []*Object, init func(*Object), assign func(*Object, *Directory)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Object)
+	for i := range nodes {
+		if nodes[i].directory_objects == nil {
+			continue
+		}
+		fk := *nodes[i].directory_objects
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	query.Where(directory.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "directory_objects" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (oq *ObjectQuery) sqlCount(ctx context.Context) (int, error) {
@@ -490,11 +504,14 @@ func (oq *ObjectQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (oq *ObjectQuery) sqlExist(ctx context.Context) (bool, error) {
-	n, err := oq.sqlCount(ctx)
-	if err != nil {
+	switch _, err := oq.FirstID(ctx); {
+	case IsNotFound(err):
+		return false, nil
+	case err != nil:
 		return false, fmt.Errorf("ent: check existence: %w", err)
+	default:
+		return true, nil
 	}
-	return n > 0, nil
 }
 
 func (oq *ObjectQuery) querySpec() *sqlgraph.QuerySpec {
@@ -595,7 +612,7 @@ func (ogb *ObjectGroupBy) Aggregate(fns ...AggregateFunc) *ObjectGroupBy {
 }
 
 // Scan applies the group-by query and scans the result into the given value.
-func (ogb *ObjectGroupBy) Scan(ctx context.Context, v interface{}) error {
+func (ogb *ObjectGroupBy) Scan(ctx context.Context, v any) error {
 	query, err := ogb.path(ctx)
 	if err != nil {
 		return err
@@ -604,7 +621,7 @@ func (ogb *ObjectGroupBy) Scan(ctx context.Context, v interface{}) error {
 	return ogb.sqlScan(ctx, v)
 }
 
-func (ogb *ObjectGroupBy) sqlScan(ctx context.Context, v interface{}) error {
+func (ogb *ObjectGroupBy) sqlScan(ctx context.Context, v any) error {
 	for _, f := range ogb.fields {
 		if !object.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("invalid field %q for group-by", f)}
@@ -629,8 +646,6 @@ func (ogb *ObjectGroupBy) sqlQuery() *sql.Selector {
 	for _, fn := range ogb.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
-	// If no columns were selected in a custom aggregation function, the default
-	// selection is the fields used for "group-by", and the aggregation functions.
 	if len(selector.SelectedColumns()) == 0 {
 		columns := make([]string, 0, len(ogb.fields)+len(ogb.fns))
 		for _, f := range ogb.fields {
@@ -650,8 +665,14 @@ type ObjectSelect struct {
 	sql *sql.Selector
 }
 
+// Aggregate adds the given aggregation functions to the selector query.
+func (os *ObjectSelect) Aggregate(fns ...AggregateFunc) *ObjectSelect {
+	os.fns = append(os.fns, fns...)
+	return os
+}
+
 // Scan applies the selector query and scans the result into the given value.
-func (os *ObjectSelect) Scan(ctx context.Context, v interface{}) error {
+func (os *ObjectSelect) Scan(ctx context.Context, v any) error {
 	if err := os.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -659,7 +680,17 @@ func (os *ObjectSelect) Scan(ctx context.Context, v interface{}) error {
 	return os.sqlScan(ctx, v)
 }
 
-func (os *ObjectSelect) sqlScan(ctx context.Context, v interface{}) error {
+func (os *ObjectSelect) sqlScan(ctx context.Context, v any) error {
+	aggregation := make([]string, 0, len(os.fns))
+	for _, fn := range os.fns {
+		aggregation = append(aggregation, fn(os.sql))
+	}
+	switch n := len(*os.selector.flds); {
+	case n == 0 && len(aggregation) > 0:
+		os.sql.Select(aggregation...)
+	case n != 0 && len(aggregation) > 0:
+		os.sql.AppendSelect(aggregation...)
+	}
 	rows := &sql.Rows{}
 	query, args := os.sql.Query()
 	if err := os.driver.Query(ctx, query, args, rows); err != nil {

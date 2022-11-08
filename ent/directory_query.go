@@ -19,13 +19,12 @@ import (
 // DirectoryQuery is the builder for querying Directory entities.
 type DirectoryQuery struct {
 	config
-	limit      *int
-	offset     *int
-	unique     *bool
-	order      []OrderFunc
-	fields     []string
-	predicates []predicate.Directory
-	// eager-loading edges.
+	limit        *int
+	offset       *int
+	unique       *bool
+	order        []OrderFunc
+	fields       []string
+	predicates   []predicate.Directory
 	withObjects  *ObjectQuery
 	withParent   *DirectoryQuery
 	withChildren *DirectoryQuery
@@ -369,7 +368,6 @@ func (dq *DirectoryQuery) WithChildren(opts ...func(*DirectoryQuery)) *Directory
 //		GroupBy(directory.FieldCreatedBy).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-//
 func (dq *DirectoryQuery) GroupBy(field string, fields ...string) *DirectoryGroupBy {
 	grbuild := &DirectoryGroupBy{config: dq.config}
 	grbuild.fields = append([]string{field}, fields...)
@@ -396,13 +394,17 @@ func (dq *DirectoryQuery) GroupBy(field string, fields ...string) *DirectoryGrou
 //	client.Directory.Query().
 //		Select(directory.FieldCreatedBy).
 //		Scan(ctx, &v)
-//
 func (dq *DirectoryQuery) Select(fields ...string) *DirectorySelect {
 	dq.fields = append(dq.fields, fields...)
 	selbuild := &DirectorySelect{DirectoryQuery: dq}
 	selbuild.label = directory.Label
 	selbuild.flds, selbuild.scan = &dq.fields, selbuild.Scan
 	return selbuild
+}
+
+// Aggregate returns a DirectorySelect configured with the given aggregations.
+func (dq *DirectoryQuery) Aggregate(fns ...AggregateFunc) *DirectorySelect {
+	return dq.Select().Aggregate(fns...)
 }
 
 func (dq *DirectoryQuery) prepareQuery(ctx context.Context) error {
@@ -431,10 +433,10 @@ func (dq *DirectoryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Di
 			dq.withChildren != nil,
 		}
 	)
-	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
+	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Directory).scanValues(nil, columns)
 	}
-	_spec.Assign = func(columns []string, values []interface{}) error {
+	_spec.Assign = func(columns []string, values []any) error {
 		node := &Directory{config: dq.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
@@ -449,88 +451,112 @@ func (dq *DirectoryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Di
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-
 	if query := dq.withObjects; query != nil {
-		fks := make([]driver.Value, 0, len(nodes))
-		nodeids := make(map[int64]*Directory)
-		for i := range nodes {
-			fks = append(fks, nodes[i].ID)
-			nodeids[nodes[i].ID] = nodes[i]
-			nodes[i].Edges.Objects = []*Object{}
-		}
-		query.withFKs = true
-		query.Where(predicate.Object(func(s *sql.Selector) {
-			s.Where(sql.InValues(directory.ObjectsColumn, fks...))
-		}))
-		neighbors, err := query.All(ctx)
-		if err != nil {
+		if err := dq.loadObjects(ctx, query, nodes,
+			func(n *Directory) { n.Edges.Objects = []*Object{} },
+			func(n *Directory, e *Object) { n.Edges.Objects = append(n.Edges.Objects, e) }); err != nil {
 			return nil, err
 		}
-		for _, n := range neighbors {
-			fk := n.directory_objects
-			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "directory_objects" is nil for node %v`, n.ID)
-			}
-			node, ok := nodeids[*fk]
-			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "directory_objects" returned %v for node %v`, *fk, n.ID)
-			}
-			node.Edges.Objects = append(node.Edges.Objects, n)
-		}
 	}
-
 	if query := dq.withParent; query != nil {
-		ids := make([]int64, 0, len(nodes))
-		nodeids := make(map[int64][]*Directory)
-		for i := range nodes {
-			fk := nodes[i].ParentID
-			if _, ok := nodeids[fk]; !ok {
-				ids = append(ids, fk)
-			}
-			nodeids[fk] = append(nodeids[fk], nodes[i])
-		}
-		query.Where(directory.IDIn(ids...))
-		neighbors, err := query.All(ctx)
-		if err != nil {
+		if err := dq.loadParent(ctx, query, nodes, nil,
+			func(n *Directory, e *Directory) { n.Edges.Parent = e }); err != nil {
 			return nil, err
 		}
-		for _, n := range neighbors {
-			nodes, ok := nodeids[n.ID]
-			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "parent_id" returned %v`, n.ID)
-			}
-			for i := range nodes {
-				nodes[i].Edges.Parent = n
-			}
-		}
 	}
-
 	if query := dq.withChildren; query != nil {
-		fks := make([]driver.Value, 0, len(nodes))
-		nodeids := make(map[int64]*Directory)
-		for i := range nodes {
-			fks = append(fks, nodes[i].ID)
-			nodeids[nodes[i].ID] = nodes[i]
-			nodes[i].Edges.Children = []*Directory{}
-		}
-		query.Where(predicate.Directory(func(s *sql.Selector) {
-			s.Where(sql.InValues(directory.ChildrenColumn, fks...))
-		}))
-		neighbors, err := query.All(ctx)
-		if err != nil {
+		if err := dq.loadChildren(ctx, query, nodes,
+			func(n *Directory) { n.Edges.Children = []*Directory{} },
+			func(n *Directory, e *Directory) { n.Edges.Children = append(n.Edges.Children, e) }); err != nil {
 			return nil, err
 		}
-		for _, n := range neighbors {
-			fk := n.ParentID
-			node, ok := nodeids[fk]
-			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "parent_id" returned %v for node %v`, fk, n.ID)
-			}
-			node.Edges.Children = append(node.Edges.Children, n)
+	}
+	return nodes, nil
+}
+
+func (dq *DirectoryQuery) loadObjects(ctx context.Context, query *ObjectQuery, nodes []*Directory, init func(*Directory), assign func(*Directory, *Object)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Directory)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
 		}
 	}
-
-	return nodes, nil
+	query.withFKs = true
+	query.Where(predicate.Object(func(s *sql.Selector) {
+		s.Where(sql.InValues(directory.ObjectsColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.directory_objects
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "directory_objects" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "directory_objects" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (dq *DirectoryQuery) loadParent(ctx context.Context, query *DirectoryQuery, nodes []*Directory, init func(*Directory), assign func(*Directory, *Directory)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Directory)
+	for i := range nodes {
+		fk := nodes[i].ParentID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	query.Where(directory.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "parent_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (dq *DirectoryQuery) loadChildren(ctx context.Context, query *DirectoryQuery, nodes []*Directory, init func(*Directory), assign func(*Directory, *Directory)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Directory)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.Where(predicate.Directory(func(s *sql.Selector) {
+		s.Where(sql.InValues(directory.ChildrenColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ParentID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "parent_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
 }
 
 func (dq *DirectoryQuery) sqlCount(ctx context.Context) (int, error) {
@@ -543,11 +569,14 @@ func (dq *DirectoryQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (dq *DirectoryQuery) sqlExist(ctx context.Context) (bool, error) {
-	n, err := dq.sqlCount(ctx)
-	if err != nil {
+	switch _, err := dq.FirstID(ctx); {
+	case IsNotFound(err):
+		return false, nil
+	case err != nil:
 		return false, fmt.Errorf("ent: check existence: %w", err)
+	default:
+		return true, nil
 	}
-	return n > 0, nil
 }
 
 func (dq *DirectoryQuery) querySpec() *sqlgraph.QuerySpec {
@@ -648,7 +677,7 @@ func (dgb *DirectoryGroupBy) Aggregate(fns ...AggregateFunc) *DirectoryGroupBy {
 }
 
 // Scan applies the group-by query and scans the result into the given value.
-func (dgb *DirectoryGroupBy) Scan(ctx context.Context, v interface{}) error {
+func (dgb *DirectoryGroupBy) Scan(ctx context.Context, v any) error {
 	query, err := dgb.path(ctx)
 	if err != nil {
 		return err
@@ -657,7 +686,7 @@ func (dgb *DirectoryGroupBy) Scan(ctx context.Context, v interface{}) error {
 	return dgb.sqlScan(ctx, v)
 }
 
-func (dgb *DirectoryGroupBy) sqlScan(ctx context.Context, v interface{}) error {
+func (dgb *DirectoryGroupBy) sqlScan(ctx context.Context, v any) error {
 	for _, f := range dgb.fields {
 		if !directory.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("invalid field %q for group-by", f)}
@@ -682,8 +711,6 @@ func (dgb *DirectoryGroupBy) sqlQuery() *sql.Selector {
 	for _, fn := range dgb.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
-	// If no columns were selected in a custom aggregation function, the default
-	// selection is the fields used for "group-by", and the aggregation functions.
 	if len(selector.SelectedColumns()) == 0 {
 		columns := make([]string, 0, len(dgb.fields)+len(dgb.fns))
 		for _, f := range dgb.fields {
@@ -703,8 +730,14 @@ type DirectorySelect struct {
 	sql *sql.Selector
 }
 
+// Aggregate adds the given aggregation functions to the selector query.
+func (ds *DirectorySelect) Aggregate(fns ...AggregateFunc) *DirectorySelect {
+	ds.fns = append(ds.fns, fns...)
+	return ds
+}
+
 // Scan applies the selector query and scans the result into the given value.
-func (ds *DirectorySelect) Scan(ctx context.Context, v interface{}) error {
+func (ds *DirectorySelect) Scan(ctx context.Context, v any) error {
 	if err := ds.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -712,7 +745,17 @@ func (ds *DirectorySelect) Scan(ctx context.Context, v interface{}) error {
 	return ds.sqlScan(ctx, v)
 }
 
-func (ds *DirectorySelect) sqlScan(ctx context.Context, v interface{}) error {
+func (ds *DirectorySelect) sqlScan(ctx context.Context, v any) error {
+	aggregation := make([]string, 0, len(ds.fns))
+	for _, fn := range ds.fns {
+		aggregation = append(aggregation, fn(ds.sql))
+	}
+	switch n := len(*ds.selector.flds); {
+	case n == 0 && len(aggregation) > 0:
+		ds.sql.Select(aggregation...)
+	case n != 0 && len(aggregation) > 0:
+		ds.sql.AppendSelect(aggregation...)
+	}
 	rows := &sql.Rows{}
 	query, args := ds.sql.Query()
 	if err := ds.driver.Query(ctx, query, args, rows); err != nil {

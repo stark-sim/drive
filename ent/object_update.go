@@ -266,67 +266,31 @@ func (ou *ObjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 	}
 	if value, ok := ou.mutation.CreatedBy(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: object.FieldCreatedBy,
-		})
+		_spec.SetField(object.FieldCreatedBy, field.TypeInt64, value)
 	}
 	if value, ok := ou.mutation.AddedCreatedBy(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: object.FieldCreatedBy,
-		})
+		_spec.AddField(object.FieldCreatedBy, field.TypeInt64, value)
 	}
 	if value, ok := ou.mutation.UpdatedBy(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: object.FieldUpdatedBy,
-		})
+		_spec.SetField(object.FieldUpdatedBy, field.TypeInt64, value)
 	}
 	if value, ok := ou.mutation.AddedUpdatedBy(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: object.FieldUpdatedBy,
-		})
+		_spec.AddField(object.FieldUpdatedBy, field.TypeInt64, value)
 	}
 	if value, ok := ou.mutation.UpdatedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: object.FieldUpdatedAt,
-		})
+		_spec.SetField(object.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := ou.mutation.DeletedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: object.FieldDeletedAt,
-		})
+		_spec.SetField(object.FieldDeletedAt, field.TypeTime, value)
 	}
 	if value, ok := ou.mutation.Name(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: object.FieldName,
-		})
+		_spec.SetField(object.FieldName, field.TypeString, value)
 	}
 	if value, ok := ou.mutation.URL(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: object.FieldURL,
-		})
+		_spec.SetField(object.FieldURL, field.TypeString, value)
 	}
 	if value, ok := ou.mutation.IsPublic(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: object.FieldIsPublic,
-		})
+		_spec.SetField(object.FieldIsPublic, field.TypeBool, value)
 	}
 	if ou.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -683,67 +647,31 @@ func (ouo *ObjectUpdateOne) sqlSave(ctx context.Context) (_node *Object, err err
 		}
 	}
 	if value, ok := ouo.mutation.CreatedBy(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: object.FieldCreatedBy,
-		})
+		_spec.SetField(object.FieldCreatedBy, field.TypeInt64, value)
 	}
 	if value, ok := ouo.mutation.AddedCreatedBy(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: object.FieldCreatedBy,
-		})
+		_spec.AddField(object.FieldCreatedBy, field.TypeInt64, value)
 	}
 	if value, ok := ouo.mutation.UpdatedBy(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: object.FieldUpdatedBy,
-		})
+		_spec.SetField(object.FieldUpdatedBy, field.TypeInt64, value)
 	}
 	if value, ok := ouo.mutation.AddedUpdatedBy(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: object.FieldUpdatedBy,
-		})
+		_spec.AddField(object.FieldUpdatedBy, field.TypeInt64, value)
 	}
 	if value, ok := ouo.mutation.UpdatedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: object.FieldUpdatedAt,
-		})
+		_spec.SetField(object.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := ouo.mutation.DeletedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: object.FieldDeletedAt,
-		})
+		_spec.SetField(object.FieldDeletedAt, field.TypeTime, value)
 	}
 	if value, ok := ouo.mutation.Name(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: object.FieldName,
-		})
+		_spec.SetField(object.FieldName, field.TypeString, value)
 	}
 	if value, ok := ouo.mutation.URL(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: object.FieldURL,
-		})
+		_spec.SetField(object.FieldURL, field.TypeString, value)
 	}
 	if value, ok := ouo.mutation.IsPublic(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: object.FieldIsPublic,
-		})
+		_spec.SetField(object.FieldIsPublic, field.TypeBool, value)
 	}
 	if ouo.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
