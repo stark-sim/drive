@@ -301,7 +301,6 @@ func (uq *UserQuery) WithObjects(opts ...func(*ObjectQuery)) *UserQuery {
 //		GroupBy(user.FieldCreatedBy).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-//
 func (uq *UserQuery) GroupBy(field string, fields ...string) *UserGroupBy {
 	grbuild := &UserGroupBy{config: uq.config}
 	grbuild.fields = append([]string{field}, fields...)
@@ -328,7 +327,6 @@ func (uq *UserQuery) GroupBy(field string, fields ...string) *UserGroupBy {
 //	client.User.Query().
 //		Select(user.FieldCreatedBy).
 //		Scan(ctx, &v)
-//
 func (uq *UserQuery) Select(fields ...string) *UserSelect {
 	uq.fields = append(uq.fields, fields...)
 	selbuild := &UserSelect{UserQuery: uq}

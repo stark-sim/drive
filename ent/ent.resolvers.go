@@ -8,27 +8,27 @@ import (
 	"fmt"
 )
 
-func (r *directoryResolver) ID(ctx context.Context, obj *Directory) (int, error) {
+func (r *directoryResolver) ID(ctx context.Context, obj *Directory) (string, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *directoryResolver) ParentID(ctx context.Context, obj *Directory) (*int, error) {
+func (r *directoryResolver) ParentID(ctx context.Context, obj *Directory) (*string, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *objectResolver) ID(ctx context.Context, obj *Object) (int, error) {
+func (r *objectResolver) ID(ctx context.Context, obj *Object) (string, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *objectResolver) UserID(ctx context.Context, obj *Object) (int, error) {
+func (r *objectResolver) UserID(ctx context.Context, obj *Object) (string, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Node(ctx context.Context, id int) (Noder, error) {
+func (r *queryResolver) Node(ctx context.Context, id string) (Noder, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Nodes(ctx context.Context, ids []int) ([]Noder, error) {
+func (r *queryResolver) Nodes(ctx context.Context, ids []string) ([]Noder, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -36,11 +36,11 @@ func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *userResolver) ID(ctx context.Context, obj *User) (int, error) {
+func (r *userResolver) ID(ctx context.Context, obj *User) (string, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *createUserInputResolver) ObjectIDs(ctx context.Context, obj *CreateUserInput, data []int) error {
+func (r *createUserInputResolver) ObjectIDs(ctx context.Context, obj *CreateUserInput, data []string) error {
 	panic(fmt.Errorf("not implemented"))
 }
 

@@ -17,10 +17,10 @@ autobind:
 
 # This section declares type mapping between the GraphQL and Go type systems.
 models:
-  # Defines the ID field as Go 'int'.
+  # Defines the ID field as Go 'string'.
   ID:
     model:
-      - github.com/99designs/gqlgen/graphql.IntID
+      - github.com/99designs/gqlgen/graphql.ID
   Node:
     model:
       - drive/ent.Noder
