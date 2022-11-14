@@ -33,7 +33,7 @@ func (r *queryResolver) Nodes(ctx context.Context, ids []string) ([]Noder, error
 }
 
 func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.client.User.Query().All(ctx)
 }
 
 func (r *userResolver) ID(ctx context.Context, obj *User) (string, error) {
