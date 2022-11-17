@@ -6,6 +6,7 @@ import (
 	"drive/logger"
 	"drive/services"
 	"drive/tools"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"log"
 	"net/http"
 
@@ -52,9 +53,9 @@ func main() {
 
 	// Configure the server and start listening on :8081.
 	srv := handler.NewDefaultServer(ent.NewSchema(client))
-	//http.Handle("/",
-	//	playground.Handler("Test", "/query"),
-	//)
+	http.Handle("/",
+		playground.Handler("Test", "/query"),
+	)
 	http.Handle("/query", srv)
 	log.Println("listening on :8081")
 	if err := http.ListenAndServe(":8081", nil); err != nil {
