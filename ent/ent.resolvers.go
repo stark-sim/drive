@@ -5,6 +5,7 @@ package ent
 
 import (
 	"context"
+	"drive/common"
 	"fmt"
 	"strconv"
 )
@@ -26,11 +27,15 @@ func (r *objectResolver) UserID(ctx context.Context, obj *Object) (string, error
 }
 
 func (r *queryResolver) Node(ctx context.Context, id string) (Noder, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.client.Noder(ctx, common.StringToInt64(id))
 }
 
 func (r *queryResolver) Nodes(ctx context.Context, ids []string) ([]Noder, error) {
-	panic(fmt.Errorf("not implemented"))
+	intIDs := make([]int64, len(ids))
+	for i, v := range ids {
+		intIDs[i] = common.StringToInt64(v)
+	}
+	return r.client.Noders(ctx, intIDs)
 }
 
 func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {

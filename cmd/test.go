@@ -37,6 +37,8 @@ func main() {
 	// 业务服务层初始化工作：例如建立数据库连接供各个业务使用
 	services.Init()
 
+	client := db.NewDBClient()
+
 	//// Create ent.Client and run the schema migration.
 	//client, err := ent.Open(dialect.SQLite, "file:ent?mode=memory&cache=shared&_fk=1")
 	//if err != nil {
@@ -48,8 +50,6 @@ func main() {
 	//); err != nil {
 	//	log.Fatal("opening ent client", err)
 	//}
-
-	client := db.NewDBClient()
 
 	// Configure the server and start listening on :8081.
 	srv := handler.NewDefaultServer(ent.NewSchema(client))
