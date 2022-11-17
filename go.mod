@@ -1,6 +1,6 @@
 module drive
 
-go 1.18
+go 1.19
 
 require (
 	ariga.io/atlas v0.7.3-0.20221011160332-3ca609863edd
