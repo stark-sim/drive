@@ -6,6 +6,7 @@ package ent
 import (
 	"context"
 	"fmt"
+	"strconv"
 )
 
 func (r *directoryResolver) ID(ctx context.Context, obj *Directory) (string, error) {
@@ -37,10 +38,18 @@ func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
 }
 
 func (r *userResolver) ID(ctx context.Context, obj *User) (string, error) {
-	panic(fmt.Errorf("not implemented"))
+	return strconv.FormatInt(obj.ID, 10), nil
 }
 
 func (r *createUserInputResolver) ObjectIDs(ctx context.Context, obj *CreateUserInput, data []string) error {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *updateUserInputResolver) AddObjectIDs(ctx context.Context, obj *UpdateUserInput, data []string) error {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *updateUserInputResolver) RemoveObjectIDs(ctx context.Context, obj *UpdateUserInput, data []string) error {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -59,8 +68,12 @@ func (r *Resolver) User() UserResolver { return &userResolver{r} }
 // CreateUserInput returns CreateUserInputResolver implementation.
 func (r *Resolver) CreateUserInput() CreateUserInputResolver { return &createUserInputResolver{r} }
 
+// UpdateUserInput returns UpdateUserInputResolver implementation.
+func (r *Resolver) UpdateUserInput() UpdateUserInputResolver { return &updateUserInputResolver{r} }
+
 type directoryResolver struct{ *Resolver }
 type objectResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
 type createUserInputResolver struct{ *Resolver }
+type updateUserInputResolver struct{ *Resolver }

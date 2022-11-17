@@ -51,3 +51,59 @@ func (c *UserCreate) SetInput(i CreateUserInput) *UserCreate {
 	i.Mutate(c.Mutation())
 	return c
 }
+
+// UpdateUserInput represents a mutation input for updating users.
+type UpdateUserInput struct {
+	CreatedBy       *int64
+	UpdatedBy       *int64
+	UpdatedAt       *time.Time
+	DeletedAt       *time.Time
+	Name            *string
+	Password        *string
+	Phone           *string
+	AddObjectIDs    []int64
+	RemoveObjectIDs []int64
+}
+
+// Mutate applies the UpdateUserInput on the UserMutation builder.
+func (i *UpdateUserInput) Mutate(m *UserMutation) {
+	if v := i.CreatedBy; v != nil {
+		m.SetCreatedBy(*v)
+	}
+	if v := i.UpdatedBy; v != nil {
+		m.SetUpdatedBy(*v)
+	}
+	if v := i.UpdatedAt; v != nil {
+		m.SetUpdatedAt(*v)
+	}
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
+	}
+	if v := i.Name; v != nil {
+		m.SetName(*v)
+	}
+	if v := i.Password; v != nil {
+		m.SetPassword(*v)
+	}
+	if v := i.Phone; v != nil {
+		m.SetPhone(*v)
+	}
+	if v := i.AddObjectIDs; len(v) > 0 {
+		m.AddObjectIDs(v...)
+	}
+	if v := i.RemoveObjectIDs; len(v) > 0 {
+		m.RemoveObjectIDs(v...)
+	}
+}
+
+// SetInput applies the change-set in the UpdateUserInput on the UserUpdate builder.
+func (c *UserUpdate) SetInput(i UpdateUserInput) *UserUpdate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// SetInput applies the change-set in the UpdateUserInput on the UserUpdateOne builder.
+func (c *UserUpdateOne) SetInput(i UpdateUserInput) *UserUpdateOne {
+	i.Mutate(c.Mutation())
+	return c
+}
