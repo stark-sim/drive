@@ -45,7 +45,8 @@ func generateMigrationFiles() {
 		schema.WithForeignKeys(false),
 		schema.WithDropColumn(true),
 		schema.WithDropIndex(true),
-		schema.WithGlobalUniqueID(true),
+		//schema.WithGlobalUniqueID(true),
+		migrate.WithGlobalUniqueID(true),
 	}
 
 	err = migrate.NamedDiff(ctx, url, "update", opts...)

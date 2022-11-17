@@ -44,6 +44,7 @@ func (User) Indexes() []ent.Index {
 
 func (User) Annotations() []schema.Annotation {
 	return []schema.Annotation{
+		entgql.RelayConnection(),
 		entgql.QueryField(),
 		entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),
 	}

@@ -12,8 +12,6 @@ type Resolver struct{ client *Client }
 
 func NewSchema(client *Client) graphql.ExecutableSchema {
 	return NewExecutableSchema(Config{
-		Resolvers:  &Resolver{client: client},
-		Directives: DirectiveRoot{},
-		Complexity: ComplexityRoot{},
+		Resolvers: &Resolver{client: client},
 	})
 }

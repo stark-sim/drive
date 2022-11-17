@@ -372,7 +372,6 @@ func (dq *DirectoryQuery) WithChildren(opts ...func(*DirectoryQuery)) *Directory
 //		GroupBy(directory.FieldCreatedBy).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-//
 func (dq *DirectoryQuery) GroupBy(field string, fields ...string) *DirectoryGroupBy {
 	grbuild := &DirectoryGroupBy{config: dq.config}
 	grbuild.fields = append([]string{field}, fields...)
@@ -399,7 +398,6 @@ func (dq *DirectoryQuery) GroupBy(field string, fields ...string) *DirectoryGrou
 //	client.Directory.Query().
 //		Select(directory.FieldCreatedBy).
 //		Scan(ctx, &v)
-//
 func (dq *DirectoryQuery) Select(fields ...string) *DirectorySelect {
 	dq.fields = append(dq.fields, fields...)
 	selbuild := &DirectorySelect{DirectoryQuery: dq}
