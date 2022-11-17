@@ -17,9 +17,9 @@ type User struct {
 // Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name").Default("unknown"),
-		field.String("password").Sensitive(),
-		field.String("phone"),
+		field.String("name").Default("unknown").Annotations(entgql.OrderField("NAME")),
+		field.String("password").Sensitive().Annotations(entgql.OrderField("PASSWORD")),
+		field.String("phone").Annotations(entgql.OrderField("PHONE")),
 	}
 }
 

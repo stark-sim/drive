@@ -45,9 +45,8 @@ func (r *queryResolver) Nodes(ctx context.Context, ids []string) ([]Noder, error
 }
 
 // Users is the resolver for the users field.
-func (r *queryResolver) Users(ctx context.Context, after *Cursor, first *int, before *Cursor, last *int) (*UserConnection, error) {
-	//return r.client.User.Query().All(ctx)
-	panic("not implemented")
+func (r *queryResolver) Users(ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, orderBy *UserOrder) (*UserConnection, error) {
+	return r.client.User.Query().Paginate(ctx, after, first, before, last, WithUserOrder(orderBy))
 }
 
 // ID is the resolver for the id field.

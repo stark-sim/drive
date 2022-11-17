@@ -15,7 +15,6 @@ resolver:
 # provided package. If they match it will use them, otherwise it will generate new.
 autobind:
   - drive/ent
-  - drive/ent/user
 
 # This section declares type mapping between the GraphQL and Go type systems.
 models:

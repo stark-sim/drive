@@ -902,6 +902,77 @@ func (u *UserQuery) Paginate(
 	return conn, nil
 }
 
+var (
+	// UserOrderFieldName orders User by name.
+	UserOrderFieldName = &UserOrderField{
+		field: user.FieldName,
+		toCursor: func(u *User) Cursor {
+			return Cursor{
+				ID:    u.ID,
+				Value: u.Name,
+			}
+		},
+	}
+	// UserOrderFieldPassword orders User by password.
+	UserOrderFieldPassword = &UserOrderField{
+		field: user.FieldPassword,
+		toCursor: func(u *User) Cursor {
+			return Cursor{
+				ID:    u.ID,
+				Value: u.Password,
+			}
+		},
+	}
+	// UserOrderFieldPhone orders User by phone.
+	UserOrderFieldPhone = &UserOrderField{
+		field: user.FieldPhone,
+		toCursor: func(u *User) Cursor {
+			return Cursor{
+				ID:    u.ID,
+				Value: u.Phone,
+			}
+		},
+	}
+)
+
+// String implement fmt.Stringer interface.
+func (f UserOrderField) String() string {
+	var str string
+	switch f.field {
+	case user.FieldName:
+		str = "NAME"
+	case user.FieldPassword:
+		str = "PASSWORD"
+	case user.FieldPhone:
+		str = "PHONE"
+	}
+	return str
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (f UserOrderField) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(f.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (f *UserOrderField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("UserOrderField %T must be a string", v)
+	}
+	switch str {
+	case "NAME":
+		*f = *UserOrderFieldName
+	case "PASSWORD":
+		*f = *UserOrderFieldPassword
+	case "PHONE":
+		*f = *UserOrderFieldPhone
+	default:
+		return fmt.Errorf("%s is not a valid UserOrderField", str)
+	}
+	return nil
+}
+
 // UserOrderField defines the ordering field of User.
 type UserOrderField struct {
 	field    string

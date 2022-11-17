@@ -100,6 +100,9 @@ type Query {
 
     """Returns the last _n_ elements from the list."""
     last: Int
+
+    """Ordering options for Users returned from the connection."""
+    orderBy: UserOrder
   ): UserConnection!
 }
 """The builtin Time type"""
@@ -145,4 +148,17 @@ type UserEdge {
   node: User
   """A cursor for use in pagination."""
   cursor: Cursor!
+}
+"""Ordering options for User connections"""
+input UserOrder {
+  """The ordering direction."""
+  direction: OrderDirection! = ASC
+  """The field by which to order Users."""
+  field: UserOrderField!
+}
+"""Properties by which User connections can be ordered."""
+enum UserOrderField {
+  NAME
+  PASSWORD
+  PHONE
 }

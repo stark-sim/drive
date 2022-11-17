@@ -94,7 +94,7 @@ type ComplexityRoot struct {
 	Query struct {
 		Node  func(childComplexity int, id string) int
 		Nodes func(childComplexity int, ids []string) int
-		Users func(childComplexity int, after *Cursor, first *int, before *Cursor, last *int) int
+		Users func(childComplexity int, after *Cursor, first *int, before *Cursor, last *int, orderBy *UserOrder) int
 	}
 
 	User struct {
@@ -137,7 +137,7 @@ type ObjectResolver interface {
 type QueryResolver interface {
 	Node(ctx context.Context, id string) (Noder, error)
 	Nodes(ctx context.Context, ids []string) ([]Noder, error)
-	Users(ctx context.Context, after *Cursor, first *int, before *Cursor, last *int) (*UserConnection, error)
+	Users(ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, orderBy *UserOrder) (*UserConnection, error)
 }
 type UserResolver interface {
 	ID(ctx context.Context, obj *User) (string, error)
@@ -408,7 +408,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Users(childComplexity, args["after"].(*Cursor), args["first"].(*int), args["before"].(*Cursor), args["last"].(*int)), true
+		return e.complexity.Query.Users(childComplexity, args["after"].(*Cursor), args["first"].(*int), args["before"].(*Cursor), args["last"].(*int), args["orderBy"].(*UserOrder)), true
 
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
@@ -518,6 +518,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputCreateUserInput,
 		ec.unmarshalInputUpdateUserInput,
+		ec.unmarshalInputUserOrder,
 	)
 	first := true
 
@@ -697,6 +698,15 @@ func (ec *executionContext) field_Query_users_args(ctx context.Context, rawArgs 
 		}
 	}
 	args["last"] = arg3
+	var arg4 *UserOrder
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOUserOrder2ᚖdriveᚋentᚐUserOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg4
 	return args, nil
 }
 
@@ -2266,7 +2276,7 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Users(rctx, fc.Args["after"].(*Cursor), fc.Args["first"].(*int), fc.Args["before"].(*Cursor), fc.Args["last"].(*int))
+		return ec.resolvers.Query().Users(rctx, fc.Args["after"].(*Cursor), fc.Args["first"].(*int), fc.Args["before"].(*Cursor), fc.Args["last"].(*int), fc.Args["orderBy"].(*UserOrder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5079,6 +5089,46 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUserOrder(ctx context.Context, obj interface{}) (UserOrder, error) {
+	var it UserOrder
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["direction"]; !present {
+		asMap["direction"] = "ASC"
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			it.Direction, err = ec.unmarshalNOrderDirection2driveᚋentᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "field":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			it.Field, err = ec.unmarshalNUserOrderField2ᚖdriveᚋentᚐUserOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -6271,6 +6321,16 @@ func (ec *executionContext) marshalNObject2ᚖdriveᚋentᚐObject(ctx context.C
 	return ec._Object(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNOrderDirection2driveᚋentᚐOrderDirection(ctx context.Context, v interface{}) (OrderDirection, error) {
+	var res OrderDirection
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNOrderDirection2driveᚋentᚐOrderDirection(ctx context.Context, sel ast.SelectionSet, v OrderDirection) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNPageInfo2driveᚋentᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v PageInfo) graphql.Marshaler {
 	return ec._PageInfo(ctx, sel, &v)
 }
@@ -6327,6 +6387,22 @@ func (ec *executionContext) marshalNUserConnection2ᚖdriveᚋentᚐUserConnecti
 		return graphql.Null
 	}
 	return ec._UserConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUserOrderField2ᚖdriveᚋentᚐUserOrderField(ctx context.Context, v interface{}) (*UserOrderField, error) {
+	var res = new(UserOrderField)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUserOrderField2ᚖdriveᚋentᚐUserOrderField(ctx context.Context, sel ast.SelectionSet, v *UserOrderField) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -6941,6 +7017,14 @@ func (ec *executionContext) marshalOUserEdge2ᚖdriveᚋentᚐUserEdge(ctx conte
 		return graphql.Null
 	}
 	return ec._UserEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOUserOrder2ᚖdriveᚋentᚐUserOrder(ctx context.Context, v interface{}) (*UserOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputUserOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {
