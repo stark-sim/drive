@@ -192,6 +192,8 @@ type UserWhereInputResolver interface {
 	IDGte(ctx context.Context, obj *UserWhereInput, data *string) error
 	IDLt(ctx context.Context, obj *UserWhereInput, data *string) error
 	IDLte(ctx context.Context, obj *UserWhereInput, data *string) error
+
+	IsFucked(ctx context.Context, obj *UserWhereInput, data *bool) error
 }
 
 type executableSchema struct {
@@ -6623,7 +6625,7 @@ func (ec *executionContext) unmarshalInputUserWhereInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdBy", "createdByNEQ", "createdByIn", "createdByNotIn", "createdByGT", "createdByGTE", "createdByLT", "createdByLTE", "updatedBy", "updatedByNEQ", "updatedByIn", "updatedByNotIn", "updatedByGT", "updatedByGTE", "updatedByLT", "updatedByLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "phone", "phoneNEQ", "phoneIn", "phoneNotIn", "phoneGT", "phoneGTE", "phoneLT", "phoneLTE", "phoneContains", "phoneHasPrefix", "phoneHasSuffix", "phoneEqualFold", "phoneContainsFold", "hasObjects", "hasObjectsWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdBy", "createdByNEQ", "createdByIn", "createdByNotIn", "createdByGT", "createdByGTE", "createdByLT", "createdByLTE", "updatedBy", "updatedByNEQ", "updatedByIn", "updatedByNotIn", "updatedByGT", "updatedByGTE", "updatedByLT", "updatedByLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "phone", "phoneNEQ", "phoneIn", "phoneNotIn", "phoneGT", "phoneGTE", "phoneLT", "phoneLTE", "phoneContains", "phoneHasPrefix", "phoneHasSuffix", "phoneEqualFold", "phoneContainsFold", "hasObjects", "hasObjectsWith", "isFucked"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7284,6 +7286,17 @@ func (ec *executionContext) unmarshalInputUserWhereInput(ctx context.Context, ob
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasObjectsWith"))
 			it.HasObjectsWith, err = ec.unmarshalOObjectWhereInput2ᚕᚖdriveᚋentᚐObjectWhereInputᚄ(ctx, v)
 			if err != nil {
+				return it, err
+			}
+		case "isFucked":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isFucked"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.UserWhereInput().IsFucked(ctx, &it, data); err != nil {
 				return it, err
 			}
 		}

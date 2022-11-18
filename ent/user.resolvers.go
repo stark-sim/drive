@@ -5,6 +5,7 @@ package ent
 
 import (
 	"context"
+	"fmt"
 )
 
 // CreateUser is the resolver for the createUser field.
@@ -12,6 +13,11 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input CreateUserInput
 	// 事务如此简单
 	client := FromContext(ctx)
 	return client.User.Create().SetName(*input.Name).SetPassword(input.Password).SetPhone(input.Phone).Save(ctx)
+}
+
+// IsFucked is the resolver for the isFucked field.
+func (r *userWhereInputResolver) IsFucked(ctx context.Context, obj *UserWhereInput, data *bool) error {
+	panic(fmt.Errorf("not implemented: IsFucked - isFucked"))
 }
 
 // Mutation returns MutationResolver implementation.

@@ -1,3 +1,7 @@
 type Mutation {
     createUser(input: CreateUserInput!): User
 }
+
+extend input UserWhereInput {
+    isFucked: Boolean
+}
