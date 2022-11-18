@@ -15,6 +15,11 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input CreateUserInput
 	return client.User.Create().SetName(*input.Name).SetPassword(input.Password).SetPhone(input.Phone).Save(ctx)
 }
 
+// Ping is the resolver for the ping field.
+func (r *queryResolver) Ping(ctx context.Context) (string, error) {
+	return "pong", nil
+}
+
 // IsFucked is the resolver for the isFucked field.
 func (r *userWhereInputResolver) IsFucked(ctx context.Context, obj *UserWhereInput, data *bool) error {
 	panic(fmt.Errorf("not implemented: IsFucked - isFucked"))

@@ -5,3 +5,7 @@ type Mutation {
 extend input UserWhereInput {
     isFucked: Boolean
 }
+
+extend type Query {
+    ping: String!
+}
