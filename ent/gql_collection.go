@@ -87,6 +87,9 @@ func newDirectoryPaginateArgs(rv map[string]interface{}) *directoryPaginateArgs 
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
 	}
+	if v, ok := rv[whereField].(*DirectoryWhereInput); ok {
+		args.opts = append(args.opts, WithDirectoryFilter(v.Filter))
+	}
 	return args
 }
 
@@ -153,6 +156,9 @@ func newObjectPaginateArgs(rv map[string]interface{}) *objectPaginateArgs {
 	}
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[whereField].(*ObjectWhereInput); ok {
+		args.opts = append(args.opts, WithObjectFilter(v.Filter))
 	}
 	return args
 }
@@ -234,6 +240,9 @@ func newUserPaginateArgs(rv map[string]interface{}) *userPaginateArgs {
 				args.opts = append(args.opts, WithUserOrder(v))
 			}
 		}
+	}
+	if v, ok := rv[whereField].(*UserWhereInput); ok {
+		args.opts = append(args.opts, WithUserFilter(v.Filter))
 	}
 	return args
 }
