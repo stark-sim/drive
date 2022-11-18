@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
+	"database/sql"
+	"database/sql/driver"
 	"drive/config"
 	"drive/db"
 	"drive/logger"
 	"drive/services"
 	"drive/tools"
+	"entgo.io/contrib/entgql"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"log"
 	"net/http"
@@ -53,6 +57,18 @@ func main() {
 
 	// Configure the server and start listening on :8081.
 	srv := handler.NewDefaultServer(ent.NewSchema(client))
+	// Transaction, optional for Isolation Levels
+	srv.Use(entgql.Transactioner{
+		TxOpener: entgql.TxOpenerFunc(func(ctx context.Context) (context.Context, driver.Tx, error) {
+			tx, err := client.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
+			if err != nil {
+				return nil, nil, err
+			}
+			ctx = ent.NewTxContext(ctx, tx)
+			ctx = ent.NewContext(ctx, tx.Client())
+			return ctx, tx, nil
+		}),
+	})
 	http.Handle("/",
 		playground.Handler("Test", "/query"),
 	)
