@@ -26,8 +26,8 @@ func (Object) Fields() []ent.Field {
 // Edges of the Object.
 func (Object) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("user", User.Type).Ref("objects").Unique().Field("user_id").Required().Annotations(entproto.Field(15)),
-		edge.From("directory", Directory.Type).Ref("objects").Unique().Annotations(entproto.Field(16)),
+		edge.From("user", User.Type).Ref("objects").Unique().Field("user_id").Required().Annotations(entproto.Field(21)),
+		edge.From("directory", Directory.Type).Ref("objects").Unique().Annotations(entproto.Field(22)),
 	}
 }
 
@@ -38,5 +38,7 @@ func (Object) Mixin() []ent.Mixin {
 }
 
 func (Object) Annotations() []schema.Annotation {
-	return []schema.Annotation{}
+	return []schema.Annotation{
+		entproto.Message(),
+	}
 }

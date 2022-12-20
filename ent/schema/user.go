@@ -18,16 +18,16 @@ type User struct {
 // Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name").Default("unknown").Annotations(entgql.OrderField("NAME")).Annotations(entproto.Field(11)),
-		field.String("password").Sensitive().Annotations(entgql.OrderField("PASSWORD")).Annotations(entproto.Field(12)),
-		field.String("phone").Annotations(entgql.OrderField("PHONE")).Annotations(entproto.Field(13)),
+		field.String("name").Default("unknown").Annotations(entgql.OrderField("NAME"), entproto.Field(11)),
+		field.String("password").Sensitive().Annotations(entgql.OrderField("PASSWORD"), entproto.Field(12)),
+		field.String("phone").Annotations(entgql.OrderField("PHONE"), entproto.Field(13)),
 	}
 }
 
 // Edges of the User.
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("objects", Object.Type).Annotations(entproto.Field(14)),
+		edge.To("objects", Object.Type).Annotations(entproto.Field(21)),
 	}
 }
 
@@ -48,5 +48,6 @@ func (User) Annotations() []schema.Annotation {
 		entgql.RelayConnection(),
 		entgql.QueryField(),
 		entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),
+		entproto.Message(),
 	}
 }
