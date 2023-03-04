@@ -40,6 +40,18 @@ func (d *Directory) Children(ctx context.Context) (result []*Directory, err erro
 	return result, err
 }
 
+func (e *Email) Socials(ctx context.Context) (result []*Social, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = e.NamedSocials(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = e.Edges.SocialsOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = e.QuerySocials().All(ctx)
+	}
+	return result, err
+}
+
 func (o *Object) User(ctx context.Context) (*User, error) {
 	result, err := o.Edges.UserOrErr()
 	if IsNotLoaded(err) {
@@ -56,6 +68,22 @@ func (o *Object) Directory(ctx context.Context) (*Directory, error) {
 	return result, MaskNotFound(err)
 }
 
+func (s *Social) Email(ctx context.Context) (*Email, error) {
+	result, err := s.Edges.EmailOrErr()
+	if IsNotLoaded(err) {
+		result, err = s.QueryEmail().Only(ctx)
+	}
+	return result, err
+}
+
+func (s *Social) Wechat(ctx context.Context) (*Wechat, error) {
+	result, err := s.Edges.WechatOrErr()
+	if IsNotLoaded(err) {
+		result, err = s.QueryWechat().Only(ctx)
+	}
+	return result, err
+}
+
 func (u *User) Objects(ctx context.Context) (result []*Object, err error) {
 	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
 		result, err = u.NamedObjects(graphql.GetFieldContext(ctx).Field.Alias)
@@ -64,6 +92,18 @@ func (u *User) Objects(ctx context.Context) (result []*Object, err error) {
 	}
 	if IsNotLoaded(err) {
 		result, err = u.QueryObjects().All(ctx)
+	}
+	return result, err
+}
+
+func (w *Wechat) Socials(ctx context.Context) (result []*Social, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = w.NamedSocials(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = w.Edges.SocialsOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = w.QuerySocials().All(ctx)
 	}
 	return result, err
 }

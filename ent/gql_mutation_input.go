@@ -6,6 +6,110 @@ import (
 	"time"
 )
 
+// CreateSocialInput represents a mutation input for creating socials.
+type CreateSocialInput struct {
+	CreatedBy *int64
+	UpdatedBy *int64
+	CreatedAt *time.Time
+	UpdatedAt *time.Time
+	DeletedAt *time.Time
+	Name      *string
+	Type      int32
+	EmailID   int64
+	WechatID  int64
+}
+
+// Mutate applies the CreateSocialInput on the SocialMutation builder.
+func (i *CreateSocialInput) Mutate(m *SocialMutation) {
+	if v := i.CreatedBy; v != nil {
+		m.SetCreatedBy(*v)
+	}
+	if v := i.UpdatedBy; v != nil {
+		m.SetUpdatedBy(*v)
+	}
+	if v := i.CreatedAt; v != nil {
+		m.SetCreatedAt(*v)
+	}
+	if v := i.UpdatedAt; v != nil {
+		m.SetUpdatedAt(*v)
+	}
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
+	}
+	if v := i.Name; v != nil {
+		m.SetName(*v)
+	}
+	m.SetType(i.Type)
+	m.SetEmailID(i.EmailID)
+	m.SetWechatID(i.WechatID)
+}
+
+// SetInput applies the change-set in the CreateSocialInput on the SocialCreate builder.
+func (c *SocialCreate) SetInput(i CreateSocialInput) *SocialCreate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// UpdateSocialInput represents a mutation input for updating socials.
+type UpdateSocialInput struct {
+	CreatedBy   *int64
+	UpdatedBy   *int64
+	UpdatedAt   *time.Time
+	DeletedAt   *time.Time
+	Name        *string
+	Type        *int32
+	ClearEmail  bool
+	EmailID     *int64
+	ClearWechat bool
+	WechatID    *int64
+}
+
+// Mutate applies the UpdateSocialInput on the SocialMutation builder.
+func (i *UpdateSocialInput) Mutate(m *SocialMutation) {
+	if v := i.CreatedBy; v != nil {
+		m.SetCreatedBy(*v)
+	}
+	if v := i.UpdatedBy; v != nil {
+		m.SetUpdatedBy(*v)
+	}
+	if v := i.UpdatedAt; v != nil {
+		m.SetUpdatedAt(*v)
+	}
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
+	}
+	if v := i.Name; v != nil {
+		m.SetName(*v)
+	}
+	if v := i.Type; v != nil {
+		m.SetType(*v)
+	}
+	if i.ClearEmail {
+		m.ClearEmail()
+	}
+	if v := i.EmailID; v != nil {
+		m.SetEmailID(*v)
+	}
+	if i.ClearWechat {
+		m.ClearWechat()
+	}
+	if v := i.WechatID; v != nil {
+		m.SetWechatID(*v)
+	}
+}
+
+// SetInput applies the change-set in the UpdateSocialInput on the SocialUpdate builder.
+func (c *SocialUpdate) SetInput(i UpdateSocialInput) *SocialUpdate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// SetInput applies the change-set in the UpdateSocialInput on the SocialUpdateOne builder.
+func (c *SocialUpdateOne) SetInput(i UpdateSocialInput) *SocialUpdateOne {
+	i.Mutate(c.Mutation())
+	return c
+}
+
 // CreateUserInput represents a mutation input for creating users.
 type CreateUserInput struct {
 	CreatedBy *int64

@@ -5,8 +5,11 @@ package ent
 import (
 	"context"
 	"drive/ent/directory"
+	"drive/ent/email"
 	"drive/ent/object"
+	"drive/ent/social"
 	"drive/ent/user"
+	"drive/ent/wechat"
 	"errors"
 	"fmt"
 
@@ -34,8 +37,11 @@ type OrderFunc func(*sql.Selector)
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
 		directory.Table: directory.ValidColumn,
+		email.Table:     email.ValidColumn,
 		object.Table:    object.ValidColumn,
+		social.Table:    social.ValidColumn,
 		user.Table:      user.ValidColumn,
+		wechat.Table:    wechat.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {

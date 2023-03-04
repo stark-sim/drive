@@ -5,8 +5,11 @@ package ent
 import (
 	"context"
 	"drive/ent/directory"
+	"drive/ent/email"
 	"drive/ent/object"
+	"drive/ent/social"
 	"drive/ent/user"
+	"drive/ent/wechat"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -153,6 +156,75 @@ func (d *Directory) Node(ctx context.Context) (node *Node, err error) {
 	return node, nil
 }
 
+func (e *Email) Node(ctx context.Context) (node *Node, err error) {
+	node = &Node{
+		ID:     e.ID,
+		Type:   "Email",
+		Fields: make([]*Field, 6),
+		Edges:  make([]*Edge, 1),
+	}
+	var buf []byte
+	if buf, err = json.Marshal(e.CreatedBy); err != nil {
+		return nil, err
+	}
+	node.Fields[0] = &Field{
+		Type:  "int64",
+		Name:  "created_by",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(e.UpdatedBy); err != nil {
+		return nil, err
+	}
+	node.Fields[1] = &Field{
+		Type:  "int64",
+		Name:  "updated_by",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(e.CreatedAt); err != nil {
+		return nil, err
+	}
+	node.Fields[2] = &Field{
+		Type:  "time.Time",
+		Name:  "created_at",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(e.UpdatedAt); err != nil {
+		return nil, err
+	}
+	node.Fields[3] = &Field{
+		Type:  "time.Time",
+		Name:  "updated_at",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(e.DeletedAt); err != nil {
+		return nil, err
+	}
+	node.Fields[4] = &Field{
+		Type:  "time.Time",
+		Name:  "deleted_at",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(e.Name); err != nil {
+		return nil, err
+	}
+	node.Fields[5] = &Field{
+		Type:  "string",
+		Name:  "name",
+		Value: string(buf),
+	}
+	node.Edges[0] = &Edge{
+		Type: "Social",
+		Name: "socials",
+	}
+	err = e.QuerySocials().
+		Select(social.FieldID).
+		Scan(ctx, &node.Edges[0].IDs)
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
+}
+
 func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     o.ID,
@@ -256,6 +328,101 @@ func (o *Object) Node(ctx context.Context) (node *Node, err error) {
 	return node, nil
 }
 
+func (s *Social) Node(ctx context.Context) (node *Node, err error) {
+	node = &Node{
+		ID:     s.ID,
+		Type:   "Social",
+		Fields: make([]*Field, 8),
+		Edges:  make([]*Edge, 2),
+	}
+	var buf []byte
+	if buf, err = json.Marshal(s.CreatedBy); err != nil {
+		return nil, err
+	}
+	node.Fields[0] = &Field{
+		Type:  "int64",
+		Name:  "created_by",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(s.UpdatedBy); err != nil {
+		return nil, err
+	}
+	node.Fields[1] = &Field{
+		Type:  "int64",
+		Name:  "updated_by",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(s.CreatedAt); err != nil {
+		return nil, err
+	}
+	node.Fields[2] = &Field{
+		Type:  "time.Time",
+		Name:  "created_at",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(s.UpdatedAt); err != nil {
+		return nil, err
+	}
+	node.Fields[3] = &Field{
+		Type:  "time.Time",
+		Name:  "updated_at",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(s.DeletedAt); err != nil {
+		return nil, err
+	}
+	node.Fields[4] = &Field{
+		Type:  "time.Time",
+		Name:  "deleted_at",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(s.Name); err != nil {
+		return nil, err
+	}
+	node.Fields[5] = &Field{
+		Type:  "string",
+		Name:  "name",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(s.RelationID); err != nil {
+		return nil, err
+	}
+	node.Fields[6] = &Field{
+		Type:  "int64",
+		Name:  "relation_id",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(s.Type); err != nil {
+		return nil, err
+	}
+	node.Fields[7] = &Field{
+		Type:  "int32",
+		Name:  "type",
+		Value: string(buf),
+	}
+	node.Edges[0] = &Edge{
+		Type: "Email",
+		Name: "email",
+	}
+	err = s.QueryEmail().
+		Select(email.FieldID).
+		Scan(ctx, &node.Edges[0].IDs)
+	if err != nil {
+		return nil, err
+	}
+	node.Edges[1] = &Edge{
+		Type: "Wechat",
+		Name: "wechat",
+	}
+	err = s.QueryWechat().
+		Select(wechat.FieldID).
+		Scan(ctx, &node.Edges[1].IDs)
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
+}
+
 func (u *User) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     u.ID,
@@ -341,6 +508,75 @@ func (u *User) Node(ctx context.Context) (node *Node, err error) {
 	return node, nil
 }
 
+func (w *Wechat) Node(ctx context.Context) (node *Node, err error) {
+	node = &Node{
+		ID:     w.ID,
+		Type:   "Wechat",
+		Fields: make([]*Field, 6),
+		Edges:  make([]*Edge, 1),
+	}
+	var buf []byte
+	if buf, err = json.Marshal(w.CreatedBy); err != nil {
+		return nil, err
+	}
+	node.Fields[0] = &Field{
+		Type:  "int64",
+		Name:  "created_by",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(w.UpdatedBy); err != nil {
+		return nil, err
+	}
+	node.Fields[1] = &Field{
+		Type:  "int64",
+		Name:  "updated_by",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(w.CreatedAt); err != nil {
+		return nil, err
+	}
+	node.Fields[2] = &Field{
+		Type:  "time.Time",
+		Name:  "created_at",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(w.UpdatedAt); err != nil {
+		return nil, err
+	}
+	node.Fields[3] = &Field{
+		Type:  "time.Time",
+		Name:  "updated_at",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(w.DeletedAt); err != nil {
+		return nil, err
+	}
+	node.Fields[4] = &Field{
+		Type:  "time.Time",
+		Name:  "deleted_at",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(w.Name); err != nil {
+		return nil, err
+	}
+	node.Fields[5] = &Field{
+		Type:  "string",
+		Name:  "name",
+		Value: string(buf),
+	}
+	node.Edges[0] = &Edge{
+		Type: "Social",
+		Name: "socials",
+	}
+	err = w.QuerySocials().
+		Select(social.FieldID).
+		Scan(ctx, &node.Edges[0].IDs)
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
+}
+
 func (c *Client) Node(ctx context.Context, id int64) (*Node, error) {
 	n, err := c.Noder(ctx, id)
 	if err != nil {
@@ -419,6 +655,18 @@ func (c *Client) noder(ctx context.Context, table string, id int64) (Noder, erro
 			return nil, err
 		}
 		return n, nil
+	case email.Table:
+		query := c.Email.Query().
+			Where(email.ID(id))
+		query, err := query.CollectFields(ctx, "Email")
+		if err != nil {
+			return nil, err
+		}
+		n, err := query.Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
 	case object.Table:
 		query := c.Object.Query().
 			Where(object.ID(id))
@@ -431,10 +679,34 @@ func (c *Client) noder(ctx context.Context, table string, id int64) (Noder, erro
 			return nil, err
 		}
 		return n, nil
+	case social.Table:
+		query := c.Social.Query().
+			Where(social.ID(id))
+		query, err := query.CollectFields(ctx, "Social")
+		if err != nil {
+			return nil, err
+		}
+		n, err := query.Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
 	case user.Table:
 		query := c.User.Query().
 			Where(user.ID(id))
 		query, err := query.CollectFields(ctx, "User")
+		if err != nil {
+			return nil, err
+		}
+		n, err := query.Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
+	case wechat.Table:
+		query := c.Wechat.Query().
+			Where(wechat.ID(id))
+		query, err := query.CollectFields(ctx, "Wechat")
 		if err != nil {
 			return nil, err
 		}
@@ -532,6 +804,22 @@ func (c *Client) noders(ctx context.Context, table string, ids []int64) ([]Noder
 				*noder = node
 			}
 		}
+	case email.Table:
+		query := c.Email.Query().
+			Where(email.IDIn(ids...))
+		query, err := query.CollectFields(ctx, "Email")
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
 	case object.Table:
 		query := c.Object.Query().
 			Where(object.IDIn(ids...))
@@ -548,10 +836,42 @@ func (c *Client) noders(ctx context.Context, table string, ids []int64) ([]Noder
 				*noder = node
 			}
 		}
+	case social.Table:
+		query := c.Social.Query().
+			Where(social.IDIn(ids...))
+		query, err := query.CollectFields(ctx, "Social")
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
 	case user.Table:
 		query := c.User.Query().
 			Where(user.IDIn(ids...))
 		query, err := query.CollectFields(ctx, "User")
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
+	case wechat.Table:
+		query := c.Wechat.Query().
+			Where(wechat.IDIn(ids...))
+		query, err := query.CollectFields(ctx, "Wechat")
 		if err != nil {
 			return nil, err
 		}

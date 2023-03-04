@@ -21,6 +21,19 @@ func (f DirectoryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, e
 	return f(ctx, mv)
 }
 
+// The EmailFunc type is an adapter to allow the use of ordinary
+// function as Email mutator.
+type EmailFunc func(context.Context, *ent.EmailMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f EmailFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.EmailMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EmailMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The ObjectFunc type is an adapter to allow the use of ordinary
 // function as Object mutator.
 type ObjectFunc func(context.Context, *ent.ObjectMutation) (ent.Value, error)
@@ -34,6 +47,19 @@ func (f ObjectFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return f(ctx, mv)
 }
 
+// The SocialFunc type is an adapter to allow the use of ordinary
+// function as Social mutator.
+type SocialFunc func(context.Context, *ent.SocialMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SocialFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.SocialMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SocialMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)
@@ -43,6 +69,19 @@ func (f UserFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 	mv, ok := m.(*ent.UserMutation)
 	if !ok {
 		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The WechatFunc type is an adapter to allow the use of ordinary
+// function as Wechat mutator.
+type WechatFunc func(context.Context, *ent.WechatMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WechatFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.WechatMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WechatMutation", m)
 	}
 	return f(ctx, mv)
 }

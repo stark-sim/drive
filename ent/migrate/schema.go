@@ -34,6 +34,22 @@ var (
 			},
 		},
 	}
+	// EmailsColumns holds the columns for the "emails" table.
+	EmailsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_by", Type: field.TypeInt64, Default: 0},
+		{Name: "updated_by", Type: field.TypeInt64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "deleted_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Default: ""},
+	}
+	// EmailsTable holds the schema information for the "emails" table.
+	EmailsTable = &schema.Table{
+		Name:       "emails",
+		Columns:    EmailsColumns,
+		PrimaryKey: []*schema.Column{EmailsColumns[0]},
+	}
 	// ObjectsColumns holds the columns for the "objects" table.
 	ObjectsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -68,6 +84,38 @@ var (
 			},
 		},
 	}
+	// SocialsColumns holds the columns for the "socials" table.
+	SocialsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_by", Type: field.TypeInt64, Default: 0},
+		{Name: "updated_by", Type: field.TypeInt64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "deleted_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Default: "unknown"},
+		{Name: "type", Type: field.TypeInt32},
+		{Name: "relation_id", Type: field.TypeInt64},
+	}
+	// SocialsTable holds the schema information for the "socials" table.
+	SocialsTable = &schema.Table{
+		Name:       "socials",
+		Columns:    SocialsColumns,
+		PrimaryKey: []*schema.Column{SocialsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "socials_emails_socials",
+				Columns:    []*schema.Column{SocialsColumns[8]},
+				RefColumns: []*schema.Column{EmailsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "socials_wechats_socials",
+				Columns:    []*schema.Column{SocialsColumns[8]},
+				RefColumns: []*schema.Column{WechatsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -93,11 +141,30 @@ var (
 			},
 		},
 	}
+	// WechatsColumns holds the columns for the "wechats" table.
+	WechatsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_by", Type: field.TypeInt64, Default: 0},
+		{Name: "updated_by", Type: field.TypeInt64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "deleted_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Default: ""},
+	}
+	// WechatsTable holds the schema information for the "wechats" table.
+	WechatsTable = &schema.Table{
+		Name:       "wechats",
+		Columns:    WechatsColumns,
+		PrimaryKey: []*schema.Column{WechatsColumns[0]},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		DirectoriesTable,
+		EmailsTable,
 		ObjectsTable,
+		SocialsTable,
 		UsersTable,
+		WechatsTable,
 	}
 )
 
@@ -105,4 +172,6 @@ func init() {
 	DirectoriesTable.ForeignKeys[0].RefTable = DirectoriesTable
 	ObjectsTable.ForeignKeys[0].RefTable = DirectoriesTable
 	ObjectsTable.ForeignKeys[1].RefTable = UsersTable
+	SocialsTable.ForeignKeys[0].RefTable = EmailsTable
+	SocialsTable.ForeignKeys[1].RefTable = WechatsTable
 }

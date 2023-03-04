@@ -4,9 +4,12 @@ package ent
 
 import (
 	"drive/ent/directory"
+	"drive/ent/email"
 	"drive/ent/object"
 	"drive/ent/schema"
+	"drive/ent/social"
 	"drive/ent/user"
+	"drive/ent/wechat"
 	"time"
 )
 
@@ -49,6 +52,41 @@ func init() {
 	directoryDescID := directoryMixinFields0[0].Descriptor()
 	// directory.DefaultID holds the default value on creation for the id field.
 	directory.DefaultID = directoryDescID.Default.(func() int64)
+	emailMixin := schema.Email{}.Mixin()
+	emailMixinFields0 := emailMixin[0].Fields()
+	_ = emailMixinFields0
+	emailFields := schema.Email{}.Fields()
+	_ = emailFields
+	// emailDescCreatedBy is the schema descriptor for created_by field.
+	emailDescCreatedBy := emailMixinFields0[1].Descriptor()
+	// email.DefaultCreatedBy holds the default value on creation for the created_by field.
+	email.DefaultCreatedBy = emailDescCreatedBy.Default.(int64)
+	// emailDescUpdatedBy is the schema descriptor for updated_by field.
+	emailDescUpdatedBy := emailMixinFields0[2].Descriptor()
+	// email.DefaultUpdatedBy holds the default value on creation for the updated_by field.
+	email.DefaultUpdatedBy = emailDescUpdatedBy.Default.(int64)
+	// emailDescCreatedAt is the schema descriptor for created_at field.
+	emailDescCreatedAt := emailMixinFields0[3].Descriptor()
+	// email.DefaultCreatedAt holds the default value on creation for the created_at field.
+	email.DefaultCreatedAt = emailDescCreatedAt.Default.(func() time.Time)
+	// emailDescUpdatedAt is the schema descriptor for updated_at field.
+	emailDescUpdatedAt := emailMixinFields0[4].Descriptor()
+	// email.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	email.DefaultUpdatedAt = emailDescUpdatedAt.Default.(func() time.Time)
+	// email.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	email.UpdateDefaultUpdatedAt = emailDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// emailDescDeletedAt is the schema descriptor for deleted_at field.
+	emailDescDeletedAt := emailMixinFields0[5].Descriptor()
+	// email.DefaultDeletedAt holds the default value on creation for the deleted_at field.
+	email.DefaultDeletedAt = emailDescDeletedAt.Default.(time.Time)
+	// emailDescName is the schema descriptor for name field.
+	emailDescName := emailFields[0].Descriptor()
+	// email.DefaultName holds the default value on creation for the name field.
+	email.DefaultName = emailDescName.Default.(string)
+	// emailDescID is the schema descriptor for id field.
+	emailDescID := emailMixinFields0[0].Descriptor()
+	// email.DefaultID holds the default value on creation for the id field.
+	email.DefaultID = emailDescID.Default.(func() int64)
 	objectMixin := schema.Object{}.Mixin()
 	objectMixinFields0 := objectMixin[0].Fields()
 	_ = objectMixinFields0
@@ -88,6 +126,41 @@ func init() {
 	objectDescID := objectMixinFields0[0].Descriptor()
 	// object.DefaultID holds the default value on creation for the id field.
 	object.DefaultID = objectDescID.Default.(func() int64)
+	socialMixin := schema.Social{}.Mixin()
+	socialMixinFields0 := socialMixin[0].Fields()
+	_ = socialMixinFields0
+	socialFields := schema.Social{}.Fields()
+	_ = socialFields
+	// socialDescCreatedBy is the schema descriptor for created_by field.
+	socialDescCreatedBy := socialMixinFields0[1].Descriptor()
+	// social.DefaultCreatedBy holds the default value on creation for the created_by field.
+	social.DefaultCreatedBy = socialDescCreatedBy.Default.(int64)
+	// socialDescUpdatedBy is the schema descriptor for updated_by field.
+	socialDescUpdatedBy := socialMixinFields0[2].Descriptor()
+	// social.DefaultUpdatedBy holds the default value on creation for the updated_by field.
+	social.DefaultUpdatedBy = socialDescUpdatedBy.Default.(int64)
+	// socialDescCreatedAt is the schema descriptor for created_at field.
+	socialDescCreatedAt := socialMixinFields0[3].Descriptor()
+	// social.DefaultCreatedAt holds the default value on creation for the created_at field.
+	social.DefaultCreatedAt = socialDescCreatedAt.Default.(func() time.Time)
+	// socialDescUpdatedAt is the schema descriptor for updated_at field.
+	socialDescUpdatedAt := socialMixinFields0[4].Descriptor()
+	// social.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	social.DefaultUpdatedAt = socialDescUpdatedAt.Default.(func() time.Time)
+	// social.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	social.UpdateDefaultUpdatedAt = socialDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// socialDescDeletedAt is the schema descriptor for deleted_at field.
+	socialDescDeletedAt := socialMixinFields0[5].Descriptor()
+	// social.DefaultDeletedAt holds the default value on creation for the deleted_at field.
+	social.DefaultDeletedAt = socialDescDeletedAt.Default.(time.Time)
+	// socialDescName is the schema descriptor for name field.
+	socialDescName := socialFields[0].Descriptor()
+	// social.DefaultName holds the default value on creation for the name field.
+	social.DefaultName = socialDescName.Default.(string)
+	// socialDescID is the schema descriptor for id field.
+	socialDescID := socialMixinFields0[0].Descriptor()
+	// social.DefaultID holds the default value on creation for the id field.
+	social.DefaultID = socialDescID.Default.(func() int64)
 	userMixin := schema.User{}.Mixin()
 	userMixinFields0 := userMixin[0].Fields()
 	_ = userMixinFields0
@@ -123,4 +196,39 @@ func init() {
 	userDescID := userMixinFields0[0].Descriptor()
 	// user.DefaultID holds the default value on creation for the id field.
 	user.DefaultID = userDescID.Default.(func() int64)
+	wechatMixin := schema.Wechat{}.Mixin()
+	wechatMixinFields0 := wechatMixin[0].Fields()
+	_ = wechatMixinFields0
+	wechatFields := schema.Wechat{}.Fields()
+	_ = wechatFields
+	// wechatDescCreatedBy is the schema descriptor for created_by field.
+	wechatDescCreatedBy := wechatMixinFields0[1].Descriptor()
+	// wechat.DefaultCreatedBy holds the default value on creation for the created_by field.
+	wechat.DefaultCreatedBy = wechatDescCreatedBy.Default.(int64)
+	// wechatDescUpdatedBy is the schema descriptor for updated_by field.
+	wechatDescUpdatedBy := wechatMixinFields0[2].Descriptor()
+	// wechat.DefaultUpdatedBy holds the default value on creation for the updated_by field.
+	wechat.DefaultUpdatedBy = wechatDescUpdatedBy.Default.(int64)
+	// wechatDescCreatedAt is the schema descriptor for created_at field.
+	wechatDescCreatedAt := wechatMixinFields0[3].Descriptor()
+	// wechat.DefaultCreatedAt holds the default value on creation for the created_at field.
+	wechat.DefaultCreatedAt = wechatDescCreatedAt.Default.(func() time.Time)
+	// wechatDescUpdatedAt is the schema descriptor for updated_at field.
+	wechatDescUpdatedAt := wechatMixinFields0[4].Descriptor()
+	// wechat.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	wechat.DefaultUpdatedAt = wechatDescUpdatedAt.Default.(func() time.Time)
+	// wechat.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	wechat.UpdateDefaultUpdatedAt = wechatDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// wechatDescDeletedAt is the schema descriptor for deleted_at field.
+	wechatDescDeletedAt := wechatMixinFields0[5].Descriptor()
+	// wechat.DefaultDeletedAt holds the default value on creation for the deleted_at field.
+	wechat.DefaultDeletedAt = wechatDescDeletedAt.Default.(time.Time)
+	// wechatDescName is the schema descriptor for name field.
+	wechatDescName := wechatFields[0].Descriptor()
+	// wechat.DefaultName holds the default value on creation for the name field.
+	wechat.DefaultName = wechatDescName.Default.(string)
+	// wechatDescID is the schema descriptor for id field.
+	wechatDescID := wechatMixinFields0[0].Descriptor()
+	// wechat.DefaultID holds the default value on creation for the id field.
+	wechat.DefaultID = wechatDescID.Default.(func() int64)
 }

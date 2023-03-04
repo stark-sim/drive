@@ -94,6 +94,68 @@ func newDirectoryPaginateArgs(rv map[string]interface{}) *directoryPaginateArgs 
 }
 
 // CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (e *EmailQuery) CollectFields(ctx context.Context, satisfies ...string) (*EmailQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return e, nil
+	}
+	if err := e.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return e, nil
+}
+
+func (e *EmailQuery) collectField(ctx context.Context, op *graphql.OperationContext, field graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	for _, field := range graphql.CollectFields(op, field.Selections, satisfies) {
+		switch field.Name {
+		case "socials":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &SocialQuery{config: e.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			e.WithNamedSocials(alias, func(wq *SocialQuery) {
+				*wq = *query
+			})
+		}
+	}
+	return nil
+}
+
+type emailPaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []EmailPaginateOption
+}
+
+func newEmailPaginateArgs(rv map[string]interface{}) *emailPaginateArgs {
+	args := &emailPaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[whereField].(*EmailWhereInput); ok {
+		args.opts = append(args.opts, WithEmailFilter(v.Filter))
+	}
+	return args
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
 func (o *ObjectQuery) CollectFields(ctx context.Context, satisfies ...string) (*ObjectQuery, error) {
 	fc := graphql.GetFieldContext(ctx)
 	if fc == nil {
@@ -159,6 +221,98 @@ func newObjectPaginateArgs(rv map[string]interface{}) *objectPaginateArgs {
 	}
 	if v, ok := rv[whereField].(*ObjectWhereInput); ok {
 		args.opts = append(args.opts, WithObjectFilter(v.Filter))
+	}
+	return args
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (s *SocialQuery) CollectFields(ctx context.Context, satisfies ...string) (*SocialQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return s, nil
+	}
+	if err := s.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return s, nil
+}
+
+func (s *SocialQuery) collectField(ctx context.Context, op *graphql.OperationContext, field graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	for _, field := range graphql.CollectFields(op, field.Selections, satisfies) {
+		switch field.Name {
+		case "email":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &EmailQuery{config: s.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			s.withEmail = query
+		case "wechat":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &WechatQuery{config: s.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			s.withWechat = query
+		}
+	}
+	return nil
+}
+
+type socialPaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []SocialPaginateOption
+}
+
+func newSocialPaginateArgs(rv map[string]interface{}) *socialPaginateArgs {
+	args := &socialPaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[orderByField]; ok {
+		switch v := v.(type) {
+		case map[string]interface{}:
+			var (
+				err1, err2 error
+				order      = &SocialOrder{Field: &SocialOrderField{}}
+			)
+			if d, ok := v[directionField]; ok {
+				err1 = order.Direction.UnmarshalGQL(d)
+			}
+			if f, ok := v[fieldField]; ok {
+				err2 = order.Field.UnmarshalGQL(f)
+			}
+			if err1 == nil && err2 == nil {
+				args.opts = append(args.opts, WithSocialOrder(order))
+			}
+		case *SocialOrder:
+			if v != nil {
+				args.opts = append(args.opts, WithSocialOrder(v))
+			}
+		}
+	}
+	if v, ok := rv[whereField].(*SocialWhereInput); ok {
+		args.opts = append(args.opts, WithSocialFilter(v.Filter))
 	}
 	return args
 }
@@ -243,6 +397,68 @@ func newUserPaginateArgs(rv map[string]interface{}) *userPaginateArgs {
 	}
 	if v, ok := rv[whereField].(*UserWhereInput); ok {
 		args.opts = append(args.opts, WithUserFilter(v.Filter))
+	}
+	return args
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (w *WechatQuery) CollectFields(ctx context.Context, satisfies ...string) (*WechatQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return w, nil
+	}
+	if err := w.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return w, nil
+}
+
+func (w *WechatQuery) collectField(ctx context.Context, op *graphql.OperationContext, field graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	for _, field := range graphql.CollectFields(op, field.Selections, satisfies) {
+		switch field.Name {
+		case "socials":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &SocialQuery{config: w.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			w.WithNamedSocials(alias, func(wq *SocialQuery) {
+				*wq = *query
+			})
+		}
+	}
+	return nil
+}
+
+type wechatPaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []WechatPaginateOption
+}
+
+func newWechatPaginateArgs(rv map[string]interface{}) *wechatPaginateArgs {
+	args := &wechatPaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[whereField].(*WechatWhereInput); ok {
+		args.opts = append(args.opts, WithWechatFilter(v.Filter))
 	}
 	return args
 }

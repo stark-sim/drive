@@ -11,8 +11,11 @@ import (
 	"drive/ent/migrate"
 
 	"drive/ent/directory"
+	"drive/ent/email"
 	"drive/ent/object"
+	"drive/ent/social"
 	"drive/ent/user"
+	"drive/ent/wechat"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
@@ -26,10 +29,16 @@ type Client struct {
 	Schema *migrate.Schema
 	// Directory is the client for interacting with the Directory builders.
 	Directory *DirectoryClient
+	// Email is the client for interacting with the Email builders.
+	Email *EmailClient
 	// Object is the client for interacting with the Object builders.
 	Object *ObjectClient
+	// Social is the client for interacting with the Social builders.
+	Social *SocialClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// Wechat is the client for interacting with the Wechat builders.
+	Wechat *WechatClient
 	// additional fields for node api
 	tables tables
 }
@@ -46,8 +55,11 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Directory = NewDirectoryClient(c.config)
+	c.Email = NewEmailClient(c.config)
 	c.Object = NewObjectClient(c.config)
+	c.Social = NewSocialClient(c.config)
 	c.User = NewUserClient(c.config)
+	c.Wechat = NewWechatClient(c.config)
 }
 
 // Open opens a database/sql.DB specified by the driver name and
@@ -82,8 +94,11 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:       ctx,
 		config:    cfg,
 		Directory: NewDirectoryClient(cfg),
+		Email:     NewEmailClient(cfg),
 		Object:    NewObjectClient(cfg),
+		Social:    NewSocialClient(cfg),
 		User:      NewUserClient(cfg),
+		Wechat:    NewWechatClient(cfg),
 	}, nil
 }
 
@@ -104,8 +119,11 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ctx:       ctx,
 		config:    cfg,
 		Directory: NewDirectoryClient(cfg),
+		Email:     NewEmailClient(cfg),
 		Object:    NewObjectClient(cfg),
+		Social:    NewSocialClient(cfg),
 		User:      NewUserClient(cfg),
+		Wechat:    NewWechatClient(cfg),
 	}, nil
 }
 
@@ -135,8 +153,11 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.Directory.Use(hooks...)
+	c.Email.Use(hooks...)
 	c.Object.Use(hooks...)
+	c.Social.Use(hooks...)
 	c.User.Use(hooks...)
+	c.Wechat.Use(hooks...)
 }
 
 // DirectoryClient is a client for the Directory schema.
@@ -277,6 +298,112 @@ func (c *DirectoryClient) Hooks() []Hook {
 	return c.hooks.Directory
 }
 
+// EmailClient is a client for the Email schema.
+type EmailClient struct {
+	config
+}
+
+// NewEmailClient returns a client for the Email from the given config.
+func NewEmailClient(c config) *EmailClient {
+	return &EmailClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `email.Hooks(f(g(h())))`.
+func (c *EmailClient) Use(hooks ...Hook) {
+	c.hooks.Email = append(c.hooks.Email, hooks...)
+}
+
+// Create returns a builder for creating a Email entity.
+func (c *EmailClient) Create() *EmailCreate {
+	mutation := newEmailMutation(c.config, OpCreate)
+	return &EmailCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Email entities.
+func (c *EmailClient) CreateBulk(builders ...*EmailCreate) *EmailCreateBulk {
+	return &EmailCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Email.
+func (c *EmailClient) Update() *EmailUpdate {
+	mutation := newEmailMutation(c.config, OpUpdate)
+	return &EmailUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EmailClient) UpdateOne(e *Email) *EmailUpdateOne {
+	mutation := newEmailMutation(c.config, OpUpdateOne, withEmail(e))
+	return &EmailUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EmailClient) UpdateOneID(id int64) *EmailUpdateOne {
+	mutation := newEmailMutation(c.config, OpUpdateOne, withEmailID(id))
+	return &EmailUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Email.
+func (c *EmailClient) Delete() *EmailDelete {
+	mutation := newEmailMutation(c.config, OpDelete)
+	return &EmailDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EmailClient) DeleteOne(e *Email) *EmailDeleteOne {
+	return c.DeleteOneID(e.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EmailClient) DeleteOneID(id int64) *EmailDeleteOne {
+	builder := c.Delete().Where(email.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EmailDeleteOne{builder}
+}
+
+// Query returns a query builder for Email.
+func (c *EmailClient) Query() *EmailQuery {
+	return &EmailQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Email entity by its id.
+func (c *EmailClient) Get(ctx context.Context, id int64) (*Email, error) {
+	return c.Query().Where(email.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EmailClient) GetX(ctx context.Context, id int64) *Email {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QuerySocials queries the socials edge of a Email.
+func (c *EmailClient) QuerySocials(e *Email) *SocialQuery {
+	query := &SocialQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := e.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(email.Table, email.FieldID, id),
+			sqlgraph.To(social.Table, social.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, email.SocialsTable, email.SocialsColumn),
+		)
+		fromV = sqlgraph.Neighbors(e.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *EmailClient) Hooks() []Hook {
+	return c.hooks.Email
+}
+
 // ObjectClient is a client for the Object schema.
 type ObjectClient struct {
 	config
@@ -399,6 +526,128 @@ func (c *ObjectClient) Hooks() []Hook {
 	return c.hooks.Object
 }
 
+// SocialClient is a client for the Social schema.
+type SocialClient struct {
+	config
+}
+
+// NewSocialClient returns a client for the Social from the given config.
+func NewSocialClient(c config) *SocialClient {
+	return &SocialClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `social.Hooks(f(g(h())))`.
+func (c *SocialClient) Use(hooks ...Hook) {
+	c.hooks.Social = append(c.hooks.Social, hooks...)
+}
+
+// Create returns a builder for creating a Social entity.
+func (c *SocialClient) Create() *SocialCreate {
+	mutation := newSocialMutation(c.config, OpCreate)
+	return &SocialCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Social entities.
+func (c *SocialClient) CreateBulk(builders ...*SocialCreate) *SocialCreateBulk {
+	return &SocialCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Social.
+func (c *SocialClient) Update() *SocialUpdate {
+	mutation := newSocialMutation(c.config, OpUpdate)
+	return &SocialUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SocialClient) UpdateOne(s *Social) *SocialUpdateOne {
+	mutation := newSocialMutation(c.config, OpUpdateOne, withSocial(s))
+	return &SocialUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SocialClient) UpdateOneID(id int64) *SocialUpdateOne {
+	mutation := newSocialMutation(c.config, OpUpdateOne, withSocialID(id))
+	return &SocialUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Social.
+func (c *SocialClient) Delete() *SocialDelete {
+	mutation := newSocialMutation(c.config, OpDelete)
+	return &SocialDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SocialClient) DeleteOne(s *Social) *SocialDeleteOne {
+	return c.DeleteOneID(s.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SocialClient) DeleteOneID(id int64) *SocialDeleteOne {
+	builder := c.Delete().Where(social.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SocialDeleteOne{builder}
+}
+
+// Query returns a query builder for Social.
+func (c *SocialClient) Query() *SocialQuery {
+	return &SocialQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Social entity by its id.
+func (c *SocialClient) Get(ctx context.Context, id int64) (*Social, error) {
+	return c.Query().Where(social.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SocialClient) GetX(ctx context.Context, id int64) *Social {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryEmail queries the email edge of a Social.
+func (c *SocialClient) QueryEmail(s *Social) *EmailQuery {
+	query := &EmailQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(social.Table, social.FieldID, id),
+			sqlgraph.To(email.Table, email.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, social.EmailTable, social.EmailColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWechat queries the wechat edge of a Social.
+func (c *SocialClient) QueryWechat(s *Social) *WechatQuery {
+	query := &WechatQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(social.Table, social.FieldID, id),
+			sqlgraph.To(wechat.Table, wechat.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, social.WechatTable, social.WechatColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SocialClient) Hooks() []Hook {
+	return c.hooks.Social
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -503,4 +752,110 @@ func (c *UserClient) QueryObjects(u *User) *ObjectQuery {
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
+}
+
+// WechatClient is a client for the Wechat schema.
+type WechatClient struct {
+	config
+}
+
+// NewWechatClient returns a client for the Wechat from the given config.
+func NewWechatClient(c config) *WechatClient {
+	return &WechatClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `wechat.Hooks(f(g(h())))`.
+func (c *WechatClient) Use(hooks ...Hook) {
+	c.hooks.Wechat = append(c.hooks.Wechat, hooks...)
+}
+
+// Create returns a builder for creating a Wechat entity.
+func (c *WechatClient) Create() *WechatCreate {
+	mutation := newWechatMutation(c.config, OpCreate)
+	return &WechatCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Wechat entities.
+func (c *WechatClient) CreateBulk(builders ...*WechatCreate) *WechatCreateBulk {
+	return &WechatCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Wechat.
+func (c *WechatClient) Update() *WechatUpdate {
+	mutation := newWechatMutation(c.config, OpUpdate)
+	return &WechatUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WechatClient) UpdateOne(w *Wechat) *WechatUpdateOne {
+	mutation := newWechatMutation(c.config, OpUpdateOne, withWechat(w))
+	return &WechatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WechatClient) UpdateOneID(id int64) *WechatUpdateOne {
+	mutation := newWechatMutation(c.config, OpUpdateOne, withWechatID(id))
+	return &WechatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Wechat.
+func (c *WechatClient) Delete() *WechatDelete {
+	mutation := newWechatMutation(c.config, OpDelete)
+	return &WechatDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WechatClient) DeleteOne(w *Wechat) *WechatDeleteOne {
+	return c.DeleteOneID(w.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WechatClient) DeleteOneID(id int64) *WechatDeleteOne {
+	builder := c.Delete().Where(wechat.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WechatDeleteOne{builder}
+}
+
+// Query returns a query builder for Wechat.
+func (c *WechatClient) Query() *WechatQuery {
+	return &WechatQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Wechat entity by its id.
+func (c *WechatClient) Get(ctx context.Context, id int64) (*Wechat, error) {
+	return c.Query().Where(wechat.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WechatClient) GetX(ctx context.Context, id int64) *Wechat {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QuerySocials queries the socials edge of a Wechat.
+func (c *WechatClient) QuerySocials(w *Wechat) *SocialQuery {
+	query := &SocialQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := w.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(wechat.Table, wechat.FieldID, id),
+			sqlgraph.To(social.Table, social.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, wechat.SocialsTable, wechat.SocialsColumn),
+		)
+		fromV = sqlgraph.Neighbors(w.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WechatClient) Hooks() []Hook {
+	return c.hooks.Wechat
 }

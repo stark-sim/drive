@@ -9,8 +9,17 @@ import (
 // Directory is the predicate function for directory builders.
 type Directory func(*sql.Selector)
 
+// Email is the predicate function for email builders.
+type Email func(*sql.Selector)
+
 // Object is the predicate function for object builders.
 type Object func(*sql.Selector)
 
+// Social is the predicate function for social builders.
+type Social func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
+
+// Wechat is the predicate function for wechat builders.
+type Wechat func(*sql.Selector)

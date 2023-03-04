@@ -14,10 +14,16 @@ type Tx struct {
 	config
 	// Directory is the client for interacting with the Directory builders.
 	Directory *DirectoryClient
+	// Email is the client for interacting with the Email builders.
+	Email *EmailClient
 	// Object is the client for interacting with the Object builders.
 	Object *ObjectClient
+	// Social is the client for interacting with the Social builders.
+	Social *SocialClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// Wechat is the client for interacting with the Wechat builders.
+	Wechat *WechatClient
 
 	// lazily loaded.
 	client     *Client
@@ -150,8 +156,11 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Directory = NewDirectoryClient(tx.config)
+	tx.Email = NewEmailClient(tx.config)
 	tx.Object = NewObjectClient(tx.config)
+	tx.Social = NewSocialClient(tx.config)
 	tx.User = NewUserClient(tx.config)
+	tx.Wechat = NewWechatClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

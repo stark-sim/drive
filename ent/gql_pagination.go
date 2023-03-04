@@ -5,8 +5,11 @@ package ent
 import (
 	"context"
 	"drive/ent/directory"
+	"drive/ent/email"
 	"drive/ent/object"
+	"drive/ent/social"
 	"drive/ent/user"
+	"drive/ent/wechat"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -474,6 +477,237 @@ func (d *Directory) ToEdge(order *DirectoryOrder) *DirectoryEdge {
 	}
 }
 
+// EmailEdge is the edge representation of Email.
+type EmailEdge struct {
+	Node   *Email `json:"node"`
+	Cursor Cursor `json:"cursor"`
+}
+
+// EmailConnection is the connection containing edges to Email.
+type EmailConnection struct {
+	Edges      []*EmailEdge `json:"edges"`
+	PageInfo   PageInfo     `json:"pageInfo"`
+	TotalCount int          `json:"totalCount"`
+}
+
+func (c *EmailConnection) build(nodes []*Email, pager *emailPager, after *Cursor, first *int, before *Cursor, last *int) {
+	c.PageInfo.HasNextPage = before != nil
+	c.PageInfo.HasPreviousPage = after != nil
+	if first != nil && *first+1 == len(nodes) {
+		c.PageInfo.HasNextPage = true
+		nodes = nodes[:len(nodes)-1]
+	} else if last != nil && *last+1 == len(nodes) {
+		c.PageInfo.HasPreviousPage = true
+		nodes = nodes[:len(nodes)-1]
+	}
+	var nodeAt func(int) *Email
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *Email {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *Email {
+			return nodes[i]
+		}
+	}
+	c.Edges = make([]*EmailEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		c.Edges[i] = &EmailEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+	if l := len(c.Edges); l > 0 {
+		c.PageInfo.StartCursor = &c.Edges[0].Cursor
+		c.PageInfo.EndCursor = &c.Edges[l-1].Cursor
+	}
+	if c.TotalCount == 0 {
+		c.TotalCount = len(nodes)
+	}
+}
+
+// EmailPaginateOption enables pagination customization.
+type EmailPaginateOption func(*emailPager) error
+
+// WithEmailOrder configures pagination ordering.
+func WithEmailOrder(order *EmailOrder) EmailPaginateOption {
+	if order == nil {
+		order = DefaultEmailOrder
+	}
+	o := *order
+	return func(pager *emailPager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultEmailOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithEmailFilter configures pagination filter.
+func WithEmailFilter(filter func(*EmailQuery) (*EmailQuery, error)) EmailPaginateOption {
+	return func(pager *emailPager) error {
+		if filter == nil {
+			return errors.New("EmailQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type emailPager struct {
+	order  *EmailOrder
+	filter func(*EmailQuery) (*EmailQuery, error)
+}
+
+func newEmailPager(opts []EmailPaginateOption) (*emailPager, error) {
+	pager := &emailPager{}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultEmailOrder
+	}
+	return pager, nil
+}
+
+func (p *emailPager) applyFilter(query *EmailQuery) (*EmailQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *emailPager) toCursor(e *Email) Cursor {
+	return p.order.Field.toCursor(e)
+}
+
+func (p *emailPager) applyCursors(query *EmailQuery, after, before *Cursor) *EmailQuery {
+	for _, predicate := range cursorsToPredicates(
+		p.order.Direction, after, before,
+		p.order.Field.field, DefaultEmailOrder.Field.field,
+	) {
+		query = query.Where(predicate)
+	}
+	return query
+}
+
+func (p *emailPager) applyOrder(query *EmailQuery, reverse bool) *EmailQuery {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	query = query.Order(direction.orderFunc(p.order.Field.field))
+	if p.order.Field != DefaultEmailOrder.Field {
+		query = query.Order(direction.orderFunc(DefaultEmailOrder.Field.field))
+	}
+	return query
+}
+
+func (p *emailPager) orderExpr(reverse bool) sql.Querier {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	return sql.ExprFunc(func(b *sql.Builder) {
+		b.Ident(p.order.Field.field).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultEmailOrder.Field {
+			b.Comma().Ident(DefaultEmailOrder.Field.field).Pad().WriteString(string(direction))
+		}
+	})
+}
+
+// Paginate executes the query and returns a relay based cursor connection to Email.
+func (e *EmailQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...EmailPaginateOption,
+) (*EmailConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newEmailPager(opts)
+	if err != nil {
+		return nil, err
+	}
+	if e, err = pager.applyFilter(e); err != nil {
+		return nil, err
+	}
+	conn := &EmailConnection{Edges: []*EmailEdge{}}
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			if conn.TotalCount, err = e.Clone().Count(ctx); err != nil {
+				return nil, err
+			}
+			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
+			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
+		}
+	}
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
+	}
+
+	e = pager.applyCursors(e, after, before)
+	e = pager.applyOrder(e, last != nil)
+	if limit := paginateLimit(first, last); limit != 0 {
+		e.Limit(limit)
+	}
+	if field := collectedField(ctx, edgesField, nodeField); field != nil {
+		if err := e.collectField(ctx, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+			return nil, err
+		}
+	}
+
+	nodes, err := e.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn.build(nodes, pager, after, first, before, last)
+	return conn, nil
+}
+
+// EmailOrderField defines the ordering field of Email.
+type EmailOrderField struct {
+	field    string
+	toCursor func(*Email) Cursor
+}
+
+// EmailOrder defines the ordering of Email.
+type EmailOrder struct {
+	Direction OrderDirection   `json:"direction"`
+	Field     *EmailOrderField `json:"field"`
+}
+
+// DefaultEmailOrder is the default ordering of Email.
+var DefaultEmailOrder = &EmailOrder{
+	Direction: OrderDirectionAsc,
+	Field: &EmailOrderField{
+		field: email.FieldID,
+		toCursor: func(e *Email) Cursor {
+			return Cursor{ID: e.ID}
+		},
+	},
+}
+
+// ToEdge converts Email into EmailEdge.
+func (e *Email) ToEdge(order *EmailOrder) *EmailEdge {
+	if order == nil {
+		order = DefaultEmailOrder
+	}
+	return &EmailEdge{
+		Node:   e,
+		Cursor: order.Field.toCursor(e),
+	}
+}
+
 // ObjectEdge is the edge representation of Object.
 type ObjectEdge struct {
 	Node   *Object `json:"node"`
@@ -702,6 +936,280 @@ func (o *Object) ToEdge(order *ObjectOrder) *ObjectEdge {
 	return &ObjectEdge{
 		Node:   o,
 		Cursor: order.Field.toCursor(o),
+	}
+}
+
+// SocialEdge is the edge representation of Social.
+type SocialEdge struct {
+	Node   *Social `json:"node"`
+	Cursor Cursor  `json:"cursor"`
+}
+
+// SocialConnection is the connection containing edges to Social.
+type SocialConnection struct {
+	Edges      []*SocialEdge `json:"edges"`
+	PageInfo   PageInfo      `json:"pageInfo"`
+	TotalCount int           `json:"totalCount"`
+}
+
+func (c *SocialConnection) build(nodes []*Social, pager *socialPager, after *Cursor, first *int, before *Cursor, last *int) {
+	c.PageInfo.HasNextPage = before != nil
+	c.PageInfo.HasPreviousPage = after != nil
+	if first != nil && *first+1 == len(nodes) {
+		c.PageInfo.HasNextPage = true
+		nodes = nodes[:len(nodes)-1]
+	} else if last != nil && *last+1 == len(nodes) {
+		c.PageInfo.HasPreviousPage = true
+		nodes = nodes[:len(nodes)-1]
+	}
+	var nodeAt func(int) *Social
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *Social {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *Social {
+			return nodes[i]
+		}
+	}
+	c.Edges = make([]*SocialEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		c.Edges[i] = &SocialEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+	if l := len(c.Edges); l > 0 {
+		c.PageInfo.StartCursor = &c.Edges[0].Cursor
+		c.PageInfo.EndCursor = &c.Edges[l-1].Cursor
+	}
+	if c.TotalCount == 0 {
+		c.TotalCount = len(nodes)
+	}
+}
+
+// SocialPaginateOption enables pagination customization.
+type SocialPaginateOption func(*socialPager) error
+
+// WithSocialOrder configures pagination ordering.
+func WithSocialOrder(order *SocialOrder) SocialPaginateOption {
+	if order == nil {
+		order = DefaultSocialOrder
+	}
+	o := *order
+	return func(pager *socialPager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultSocialOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithSocialFilter configures pagination filter.
+func WithSocialFilter(filter func(*SocialQuery) (*SocialQuery, error)) SocialPaginateOption {
+	return func(pager *socialPager) error {
+		if filter == nil {
+			return errors.New("SocialQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type socialPager struct {
+	order  *SocialOrder
+	filter func(*SocialQuery) (*SocialQuery, error)
+}
+
+func newSocialPager(opts []SocialPaginateOption) (*socialPager, error) {
+	pager := &socialPager{}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultSocialOrder
+	}
+	return pager, nil
+}
+
+func (p *socialPager) applyFilter(query *SocialQuery) (*SocialQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *socialPager) toCursor(s *Social) Cursor {
+	return p.order.Field.toCursor(s)
+}
+
+func (p *socialPager) applyCursors(query *SocialQuery, after, before *Cursor) *SocialQuery {
+	for _, predicate := range cursorsToPredicates(
+		p.order.Direction, after, before,
+		p.order.Field.field, DefaultSocialOrder.Field.field,
+	) {
+		query = query.Where(predicate)
+	}
+	return query
+}
+
+func (p *socialPager) applyOrder(query *SocialQuery, reverse bool) *SocialQuery {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	query = query.Order(direction.orderFunc(p.order.Field.field))
+	if p.order.Field != DefaultSocialOrder.Field {
+		query = query.Order(direction.orderFunc(DefaultSocialOrder.Field.field))
+	}
+	return query
+}
+
+func (p *socialPager) orderExpr(reverse bool) sql.Querier {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	return sql.ExprFunc(func(b *sql.Builder) {
+		b.Ident(p.order.Field.field).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultSocialOrder.Field {
+			b.Comma().Ident(DefaultSocialOrder.Field.field).Pad().WriteString(string(direction))
+		}
+	})
+}
+
+// Paginate executes the query and returns a relay based cursor connection to Social.
+func (s *SocialQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...SocialPaginateOption,
+) (*SocialConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newSocialPager(opts)
+	if err != nil {
+		return nil, err
+	}
+	if s, err = pager.applyFilter(s); err != nil {
+		return nil, err
+	}
+	conn := &SocialConnection{Edges: []*SocialEdge{}}
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			if conn.TotalCount, err = s.Clone().Count(ctx); err != nil {
+				return nil, err
+			}
+			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
+			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
+		}
+	}
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
+	}
+
+	s = pager.applyCursors(s, after, before)
+	s = pager.applyOrder(s, last != nil)
+	if limit := paginateLimit(first, last); limit != 0 {
+		s.Limit(limit)
+	}
+	if field := collectedField(ctx, edgesField, nodeField); field != nil {
+		if err := s.collectField(ctx, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+			return nil, err
+		}
+	}
+
+	nodes, err := s.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn.build(nodes, pager, after, first, before, last)
+	return conn, nil
+}
+
+var (
+	// SocialOrderFieldName orders Social by name.
+	SocialOrderFieldName = &SocialOrderField{
+		field: social.FieldName,
+		toCursor: func(s *Social) Cursor {
+			return Cursor{
+				ID:    s.ID,
+				Value: s.Name,
+			}
+		},
+	}
+)
+
+// String implement fmt.Stringer interface.
+func (f SocialOrderField) String() string {
+	var str string
+	switch f.field {
+	case social.FieldName:
+		str = "NAME"
+	}
+	return str
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (f SocialOrderField) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(f.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (f *SocialOrderField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("SocialOrderField %T must be a string", v)
+	}
+	switch str {
+	case "NAME":
+		*f = *SocialOrderFieldName
+	default:
+		return fmt.Errorf("%s is not a valid SocialOrderField", str)
+	}
+	return nil
+}
+
+// SocialOrderField defines the ordering field of Social.
+type SocialOrderField struct {
+	field    string
+	toCursor func(*Social) Cursor
+}
+
+// SocialOrder defines the ordering of Social.
+type SocialOrder struct {
+	Direction OrderDirection    `json:"direction"`
+	Field     *SocialOrderField `json:"field"`
+}
+
+// DefaultSocialOrder is the default ordering of Social.
+var DefaultSocialOrder = &SocialOrder{
+	Direction: OrderDirectionAsc,
+	Field: &SocialOrderField{
+		field: social.FieldID,
+		toCursor: func(s *Social) Cursor {
+			return Cursor{ID: s.ID}
+		},
+	},
+}
+
+// ToEdge converts Social into SocialEdge.
+func (s *Social) ToEdge(order *SocialOrder) *SocialEdge {
+	if order == nil {
+		order = DefaultSocialOrder
+	}
+	return &SocialEdge{
+		Node:   s,
+		Cursor: order.Field.toCursor(s),
 	}
 }
 
@@ -1004,5 +1512,236 @@ func (u *User) ToEdge(order *UserOrder) *UserEdge {
 	return &UserEdge{
 		Node:   u,
 		Cursor: order.Field.toCursor(u),
+	}
+}
+
+// WechatEdge is the edge representation of Wechat.
+type WechatEdge struct {
+	Node   *Wechat `json:"node"`
+	Cursor Cursor  `json:"cursor"`
+}
+
+// WechatConnection is the connection containing edges to Wechat.
+type WechatConnection struct {
+	Edges      []*WechatEdge `json:"edges"`
+	PageInfo   PageInfo      `json:"pageInfo"`
+	TotalCount int           `json:"totalCount"`
+}
+
+func (c *WechatConnection) build(nodes []*Wechat, pager *wechatPager, after *Cursor, first *int, before *Cursor, last *int) {
+	c.PageInfo.HasNextPage = before != nil
+	c.PageInfo.HasPreviousPage = after != nil
+	if first != nil && *first+1 == len(nodes) {
+		c.PageInfo.HasNextPage = true
+		nodes = nodes[:len(nodes)-1]
+	} else if last != nil && *last+1 == len(nodes) {
+		c.PageInfo.HasPreviousPage = true
+		nodes = nodes[:len(nodes)-1]
+	}
+	var nodeAt func(int) *Wechat
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *Wechat {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *Wechat {
+			return nodes[i]
+		}
+	}
+	c.Edges = make([]*WechatEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		c.Edges[i] = &WechatEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+	if l := len(c.Edges); l > 0 {
+		c.PageInfo.StartCursor = &c.Edges[0].Cursor
+		c.PageInfo.EndCursor = &c.Edges[l-1].Cursor
+	}
+	if c.TotalCount == 0 {
+		c.TotalCount = len(nodes)
+	}
+}
+
+// WechatPaginateOption enables pagination customization.
+type WechatPaginateOption func(*wechatPager) error
+
+// WithWechatOrder configures pagination ordering.
+func WithWechatOrder(order *WechatOrder) WechatPaginateOption {
+	if order == nil {
+		order = DefaultWechatOrder
+	}
+	o := *order
+	return func(pager *wechatPager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultWechatOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithWechatFilter configures pagination filter.
+func WithWechatFilter(filter func(*WechatQuery) (*WechatQuery, error)) WechatPaginateOption {
+	return func(pager *wechatPager) error {
+		if filter == nil {
+			return errors.New("WechatQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type wechatPager struct {
+	order  *WechatOrder
+	filter func(*WechatQuery) (*WechatQuery, error)
+}
+
+func newWechatPager(opts []WechatPaginateOption) (*wechatPager, error) {
+	pager := &wechatPager{}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultWechatOrder
+	}
+	return pager, nil
+}
+
+func (p *wechatPager) applyFilter(query *WechatQuery) (*WechatQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *wechatPager) toCursor(w *Wechat) Cursor {
+	return p.order.Field.toCursor(w)
+}
+
+func (p *wechatPager) applyCursors(query *WechatQuery, after, before *Cursor) *WechatQuery {
+	for _, predicate := range cursorsToPredicates(
+		p.order.Direction, after, before,
+		p.order.Field.field, DefaultWechatOrder.Field.field,
+	) {
+		query = query.Where(predicate)
+	}
+	return query
+}
+
+func (p *wechatPager) applyOrder(query *WechatQuery, reverse bool) *WechatQuery {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	query = query.Order(direction.orderFunc(p.order.Field.field))
+	if p.order.Field != DefaultWechatOrder.Field {
+		query = query.Order(direction.orderFunc(DefaultWechatOrder.Field.field))
+	}
+	return query
+}
+
+func (p *wechatPager) orderExpr(reverse bool) sql.Querier {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	return sql.ExprFunc(func(b *sql.Builder) {
+		b.Ident(p.order.Field.field).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultWechatOrder.Field {
+			b.Comma().Ident(DefaultWechatOrder.Field.field).Pad().WriteString(string(direction))
+		}
+	})
+}
+
+// Paginate executes the query and returns a relay based cursor connection to Wechat.
+func (w *WechatQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...WechatPaginateOption,
+) (*WechatConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newWechatPager(opts)
+	if err != nil {
+		return nil, err
+	}
+	if w, err = pager.applyFilter(w); err != nil {
+		return nil, err
+	}
+	conn := &WechatConnection{Edges: []*WechatEdge{}}
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			if conn.TotalCount, err = w.Clone().Count(ctx); err != nil {
+				return nil, err
+			}
+			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
+			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
+		}
+	}
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
+	}
+
+	w = pager.applyCursors(w, after, before)
+	w = pager.applyOrder(w, last != nil)
+	if limit := paginateLimit(first, last); limit != 0 {
+		w.Limit(limit)
+	}
+	if field := collectedField(ctx, edgesField, nodeField); field != nil {
+		if err := w.collectField(ctx, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+			return nil, err
+		}
+	}
+
+	nodes, err := w.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn.build(nodes, pager, after, first, before, last)
+	return conn, nil
+}
+
+// WechatOrderField defines the ordering field of Wechat.
+type WechatOrderField struct {
+	field    string
+	toCursor func(*Wechat) Cursor
+}
+
+// WechatOrder defines the ordering of Wechat.
+type WechatOrder struct {
+	Direction OrderDirection    `json:"direction"`
+	Field     *WechatOrderField `json:"field"`
+}
+
+// DefaultWechatOrder is the default ordering of Wechat.
+var DefaultWechatOrder = &WechatOrder{
+	Direction: OrderDirectionAsc,
+	Field: &WechatOrderField{
+		field: wechat.FieldID,
+		toCursor: func(w *Wechat) Cursor {
+			return Cursor{ID: w.ID}
+		},
+	},
+}
+
+// ToEdge converts Wechat into WechatEdge.
+func (w *Wechat) ToEdge(order *WechatOrder) *WechatEdge {
+	if order == nil {
+		order = DefaultWechatOrder
+	}
+	return &WechatEdge{
+		Node:   w,
+		Cursor: order.Field.toCursor(w),
 	}
 }
